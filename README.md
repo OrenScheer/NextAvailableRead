@@ -1,7 +1,7 @@
 # NextAvailableRead
 Work in progress.
 
-## SETUP:
+### SETUP
 
 After downloading NextAvailableRead.py, save a text file in the same folder named ".env" (without the quotation marks).
 In this file, add:
