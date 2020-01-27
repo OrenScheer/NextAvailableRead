@@ -1,5 +1,5 @@
 # NextAvailableRead
-Work in progress.
+Work in progress. No functionality at the moment.
 
 ### SETUP
 
