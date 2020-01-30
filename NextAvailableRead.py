@@ -1,8 +1,6 @@
 from rauth.service import OAuth1Service, OAuth1Session
-import dotenv
-import os
+import os, sys, webbrowser, time, importlib, dotenv
 import pyinputplus as pyip
-import importlib
 
 # Load .env file which has user's API keys
 dotenv.load_dotenv()
@@ -22,12 +20,24 @@ def get_tokens():
     # Get user to authorize access to their account
     request_token, request_token_secret = goodreads.get_request_token(header_auth=True)
     authorize_url = goodreads.get_authorize_url(request_token)
-    print("Visit this URL in your browser: " + authorize_url)
+
+    print("")
+    print("Opening URL in your default browser in:")
+    for i in range(3, 0, -1):
+        print(i)
+        time.sleep(1)
+
+    webbrowser.open(authorize_url, autoraise=True, new=2)
 
     while pyip.inputYesNo("Have you authorized me? (y/n) ") == "no":
-        print("Please authorize me!")
+        print("Please authorize me at " + authorize_url)
 
-    session = goodreads.get_auth_session(request_token, request_token_secret)
+    try:
+        session = goodreads.get_auth_session(request_token, request_token_secret)
+    except:
+        print("You must authorize me for NextAvailableRead to work.")
+        print("Closing application. You must try again.")
+        sys.exit()
 
     # Open .env file to add access token/secret as environment variables
     tokens = open(".env", "a")
