@@ -6,7 +6,7 @@ import pyinputplus as pyip
 dotenv.load_dotenv()
 
 def get_tokens():
-    # Authorization code sourced from example at https://www.goodreads.com/api/oauth_example
+    # Some authorization code sourced from example at https://www.goodreads.com/api/oauth_example
     goodreads = OAuth1Service(
     consumer_key=os.getenv("API_KEY"), # Are stored as environment variables in .env file
     consumer_secret=os.getenv("API_SECRET"),
@@ -32,6 +32,7 @@ def get_tokens():
     while pyip.inputYesNo("Have you authorized me? (y/n) ") == "no":
         print("Please authorize me at " + authorize_url)
 
+    # Make sure the user actually authorized
     try:
         session = goodreads.get_auth_session(request_token, request_token_secret)
     except:
