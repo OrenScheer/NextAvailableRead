@@ -1,6 +1,8 @@
 from rauth.service import OAuth1Service, OAuth1Session
-import os, sys, webbrowser, time, importlib, dotenv
+import os, sys, webbrowser, time, importlib, dotenv, json
 import pyinputplus as pyip
+import xml.etree.ElementTree as ET
+import xml.dom.minidom
 
 # Load .env file which has user's API keys
 dotenv.load_dotenv()
@@ -67,3 +69,13 @@ session = OAuth1Session(
     access_token = os.getenv("ACCESS_TOKEN"),
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET"),
 )
+search = {"id": "64346486", "shelf": "to-read", "per_page": "200", "v": "2"}
+r = session.get("https://www.goodreads.com/review/list.xml?v=2", params=search)
+#print(r.content)
+#print(r.url)
+root = ET.fromstring(r.content)
+isbns = []
+reviews = root.find("reviews")
+for review in reviews:
+    isbns.append(review.find("book").find("isbn13").text)
+print(isbns)
