@@ -55,17 +55,23 @@ def get_tokens():
     print("You now have access.")
     tokens.close()
 
-def get_titles(session):
-    r = session.get("https://www.goodreads.com/review/list.xml?v=2", params=search)
-    root = ET.fromstring(r.content)
-    isbns = []
-    reviews = root.find("reviews")
-    # Print all the different tags, attributes, and text from a specific book
-    #for child in reviews[0].find("book"):
-        #print(child.tag, child.attrib, child.text)
-    for review in reviews:
-        isbns.append(review.find("book").find("title_without_series").text)
-    return isbns
+def get_titles(session, search):
+    reviews = [1]
+    titles = []
+    while len(reviews) > 0:
+        r = session.get("https://www.goodreads.com/review/list.xml?v=2", params=search)
+        root = ET.fromstring(r.content)
+        reviews = root.find("reviews")
+        # Print all the different tags, attributes, and text from a specific book
+        # Important tags
+        # itlte, title_without_series, image_url, link, num_pages, publication_year, average_rating, ratings_count, description
+        # Author can be found in .find("authors").find("author").find("name").text
+        # for child in reviews[0].find("book"):
+            # print(child.tag, child.attrib, child.text)
+        for review in reviews:
+            titles.append(review.find("book").find("title_without_series").text)
+        search["page"] = str(int(search["page"]) + 1)
+    return titles
 
 def available(title):
     # Important classes: 
@@ -99,13 +105,13 @@ session = OAuth1Session(
     access_token = os.getenv("ACCESS_TOKEN"),
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET"),
 )
-search = {"id": "64346486", "shelf": "to-read", "per_page": "200", "v": "2"}
+search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "v": "2"}
 
-titles = get_titles(session)
-#print(titles)
+titles = get_titles(session, search)
+print(titles)
 count = 0
 i = 0
-while count < 20:
+while i < len(titles) and count < 2:
     if available(titles[i]):
         print(titles[i], count, i)
         count += 1
