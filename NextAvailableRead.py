@@ -3,11 +3,10 @@ import os, sys, webbrowser, time, importlib, dotenv, json
 import pyinputplus as pyip
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
-<<<<<<< HEAD
+
 import requests
 from bs4 import BeautifulSoup
-=======
->>>>>>> b69b8f327643a4f7e0bf4dc4cc3a405bc1b0841a
+
 
 # Load .env file which has user's API keys
 dotenv.load_dotenv()
