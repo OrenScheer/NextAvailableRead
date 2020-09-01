@@ -1,12 +1,16 @@
 from rauth.service import OAuth1Service, OAuth1Session
-import os, sys, webbrowser, time, importlib, dotenv
+import os, sys, webbrowser, time, importlib, dotenv, json
 import pyinputplus as pyip
+import xml.etree.ElementTree as ET
+import xml.dom.minidom
+import requests
+from bs4 import BeautifulSoup
 
 # Load .env file which has user's API keys
 dotenv.load_dotenv()
 
 def get_tokens():
-    # Authorization code sourced from example at https://www.goodreads.com/api/oauth_example
+    # Some authorization code sourced from example at https://www.goodreads.com/api/oauth_example
     goodreads = OAuth1Service(
     consumer_key=os.getenv("API_KEY"), # Are stored as environment variables in .env file
     consumer_secret=os.getenv("API_SECRET"),
@@ -32,6 +36,7 @@ def get_tokens():
     while pyip.inputYesNo("Have you authorized me? (y/n) ") == "no":
         print("Please authorize me at " + authorize_url)
 
+    # Make sure the user actually authorized
     try:
         session = goodreads.get_auth_session(request_token, request_token_secret)
     except:
@@ -47,6 +52,29 @@ def get_tokens():
     tokens.write("ACCESS_TOKEN_SECRET = " + session.access_token_secret)
     print("You now have access.")
     tokens.close()
+
+def get_titles(session):
+    r = session.get("https://www.goodreads.com/review/list.xml?v=2", params=search)
+    root = ET.fromstring(r.content)
+    isbns = []
+    reviews = root.find("reviews")
+    for review in reviews:
+        isbns.append(review.find("book").find("title").text)
+    return isbns
+
+def available(title):
+    # Important classes: 
+    # cp-availability-status is the availability status of the item
+    # author-link is the author (just the a tags)
+    # title-content is the title
+    # cp-format indicator is the format...might have to narrow down since there are multiple tags
+    URL = "https://ottawa.bibliocommons.com/v2/search?query=" + title.replace(' ', '+') + "&searchType=keyword"
+    page = requests.get(URL)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    availability = soup.find_all(class_='cp-availability-status')
+    if len(availability) == 0:
+        return False
+    return availability[0].string == 'Available'
 
 # If access tokens are already in .env file, we don't need to go through authentication process
 if os.getenv("ACCESS_TOKEN") != None and os.getenv("ACCESS_TOKEN_SECRET") != None:
@@ -66,3 +94,14 @@ session = OAuth1Session(
     access_token = os.getenv("ACCESS_TOKEN"),
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET"),
 )
+search = {"id": "64346486", "shelf": "to-read", "per_page": "200", "v": "2"}
+
+titles = get_titles(session)
+print(titles)
+count = 0
+i = 0
+while count < 5:
+    if available(titles[i]):
+        print(titles[i])
+        count += 1
+    i += 1
