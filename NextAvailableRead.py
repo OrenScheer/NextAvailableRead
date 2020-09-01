@@ -1,5 +1,5 @@
 from rauth.service import OAuth1Service, OAuth1Session
-import os, sys, webbrowser, time, importlib, dotenv, json
+import os, sys, webbrowser, time, importlib, dotenv
 import pyinputplus as pyip
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
@@ -60,8 +60,11 @@ def get_titles(session):
     root = ET.fromstring(r.content)
     isbns = []
     reviews = root.find("reviews")
+    # Print all the different tags, attributes, and text from a specific book
+    #for child in reviews[0].find("book"):
+        #print(child.tag, child.attrib, child.text)
     for review in reviews:
-        isbns.append(review.find("book").find("title").text)
+        isbns.append(review.find("book").find("title_without_series").text)
     return isbns
 
 def available(title):
@@ -99,11 +102,11 @@ session = OAuth1Session(
 search = {"id": "64346486", "shelf": "to-read", "per_page": "200", "v": "2"}
 
 titles = get_titles(session)
-print(titles)
+#print(titles)
 count = 0
 i = 0
-while count < 5:
+while count < 20:
     if available(titles[i]):
-        print(titles[i])
+        print(titles[i], count, i)
         count += 1
     i += 1
