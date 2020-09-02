@@ -108,6 +108,8 @@ session = OAuth1Session(
 search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "v": "2"}
 
 titles = get_titles(session, search)
+random.shuffle(titles)
+#print(titles)
 count = 0
 i = 0
 while i < len(titles) and count < 10:
