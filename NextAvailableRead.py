@@ -3,7 +3,7 @@ import os, sys, webbrowser, time, importlib, dotenv
 import pyinputplus as pyip
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
-
+import random
 import requests
 from bs4 import BeautifulSoup
 
@@ -69,7 +69,7 @@ def get_titles(session, search):
         # for child in reviews[0].find("book"):
             # print(child.tag, child.attrib, child.text)
         for review in reviews:
-            titles.append(review.find("book").find("title_without_series").text)
+            titles.append((review.find("book").find("title_without_series").text, review.find("book").find("authors").find("author").find("name").text))
         search["page"] = str(int(search["page"]) + 1)
     return titles
 
@@ -85,7 +85,7 @@ def available(title):
     availability = soup.find_all(class_='cp-availability-status')
     if len(availability) == 0:
         return False
-    return availability[0].string == 'Available'
+    return 'Available' in availability[0].text
 
 # If access tokens are already in .env file, we don't need to go through authentication process
 if os.getenv("ACCESS_TOKEN") != None and os.getenv("ACCESS_TOKEN_SECRET") != None:
@@ -108,11 +108,10 @@ session = OAuth1Session(
 search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "v": "2"}
 
 titles = get_titles(session, search)
-print(titles)
 count = 0
 i = 0
-while i < len(titles) and count < 2:
-    if available(titles[i]):
+while i < len(titles) and count < 10:
+    if available(titles[i][0] + " " + titles[i][1]):
         print(titles[i], count, i)
         count += 1
     i += 1
