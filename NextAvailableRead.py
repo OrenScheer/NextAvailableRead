@@ -14,13 +14,13 @@ dotenv.load_dotenv()
 def get_tokens():
     # Some authorization code sourced from example at https://www.goodreads.com/api/oauth_example
     goodreads = OAuth1Service(
-    consumer_key=os.getenv("API_KEY"), # Are stored as environment variables in .env file
-    consumer_secret=os.getenv("API_SECRET"),
-    name='goodreads',
-    request_token_url='https://www.goodreads.com/oauth/request_token',
-    authorize_url='https://www.goodreads.com/oauth/authorize',
-    access_token_url='https://www.goodreads.com/oauth/access_token',
-    base_url='https://www.goodreads.com/'
+        consumer_key=os.getenv("API_KEY"), # Are stored as environment variables in .env file
+        consumer_secret=os.getenv("API_SECRET"),
+        name='goodreads',
+        request_token_url='https://www.goodreads.com/oauth/request_token',
+        authorize_url='https://www.goodreads.com/oauth/authorize',
+        access_token_url='https://www.goodreads.com/oauth/access_token',
+        base_url='https://www.goodreads.com/'
     )
 
     # Get user to authorize access to their account
