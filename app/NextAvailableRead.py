@@ -50,6 +50,7 @@ def get_tokens():
     tokens = open(".env", "a")
 
     # Write tokens as environment variables
+    tokens.write("\n")
     tokens.write("ACCESS_TOKEN = " + session.access_token + "\n")
     tokens.write("ACCESS_TOKEN_SECRET = " + session.access_token_secret)
     print("You now have access.")
