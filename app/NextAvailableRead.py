@@ -77,14 +77,18 @@ def available(title):
     # cp-availability-status is the availability status of the item
     # author-link is the author (just the a tags)
     # title-content is the title
-    # cp-format indicator is the format...might have to narrow down since there are multiple tags
+    # cp-format-indicator is the format...might have to narrow down since there are multiple tags
     URL = "https://ottawa.bibliocommons.com/v2/search?query=" + title.replace(' ', '+') + "&searchType=keyword"
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     availability = soup.find_all(class_='cp-availability-status')
     if len(availability) == 0:
         return False
-    return 'Available' in availability[0].text
+    formats = soup.find_all(class_='cp-format-indicator')[::3] # There are three indicators of this class for each item's format
+    for a, f in zip(availability, formats):
+        if "available" in a.text.lower() and "ebook" in f.text.lower():
+            return True
+    return False
 
 # If access tokens are already in .env file, we don't need to go through authentication process
 if os.getenv("ACCESS_TOKEN") != None and os.getenv("ACCESS_TOKEN_SECRET") != None:
