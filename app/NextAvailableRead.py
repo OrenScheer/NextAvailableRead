@@ -109,10 +109,9 @@ session = OAuth1Session(
     access_token = os.getenv("ACCESS_TOKEN"),
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET"),
 )
-search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "v": "2"}
+search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "v": "2", "sort":"random"}
 
 titles = get_titles(session, search)
-random.shuffle(titles)
 #print(titles)
 count = 0
 i = 0
