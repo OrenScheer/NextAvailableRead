@@ -6,6 +6,7 @@ import xml.dom.minidom
 import random
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import quote
 
 # Load .env file which has user's API keys
 dotenv.load_dotenv()
@@ -72,13 +73,13 @@ def get_titles(session, search):
         search["page"] = str(int(search["page"]) + 1)
     return titles
 
-def available(title):
+def available(title, author):
     # Important classes: 
     # cp-availability-status is the availability status of the item
     # author-link is the author (just the a tags)
     # title-content is the title
     # cp-format-indicator is the format...might have to narrow down since there are multiple tags
-    URL = "https://ottawa.bibliocommons.com/v2/search?query=" + title.replace(' ', '+') + "&searchType=keyword"
+    URL = "https://ottawa.bibliocommons.com/v2/search?query=" + quote('"' + title + '"' + " " + '"' + author + '"').replace(' ', '+') + "&searchType=keyword"
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     availability = soup.find_all(class_='cp-availability-status')
@@ -116,7 +117,7 @@ random.shuffle(titles)
 count = 0
 i = 0
 while i < len(titles) and count < 10:
-    if available(titles[i][0] + " " + titles[i][1]):
+    if available(titles[i][0], titles[i][1]):
         print(titles[i], count, i)
         count += 1
     i += 1
