@@ -56,6 +56,15 @@ def get_tokens():
     print("You now have access.")
     tokens.close()
 
+def get_shelves(session, search):
+    r = session.get("https://www.goodreads.com/shelf/list.xml", params=search)
+    root = ET.fromstring(r.content)
+    shelves = root.find("shelves")
+    ans = []
+    for shelf in shelves:
+        ans.append(shelf.find("name").text)
+    return ans
+
 def get_titles(session, search):
     reviews = [1]
     titles = []
@@ -110,13 +119,14 @@ session = OAuth1Session(
     access_token = os.getenv("ACCESS_TOKEN"),
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET"),
 )
-search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "v": "2", "sort":"random"}
-
+search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "sort":"random"}
+shelves = get_shelves(session, search={"id": "64346486"})
+print(shelves)
 titles = get_titles(session, search)
 #print(titles)
 count = 0
 i = 0
-while i < len(titles) and count < 10:
+while i < len(titles) and count < 2:
     if available(titles[i][0], titles[i][1]):
         print(titles[i], count, i)
         count += 1
