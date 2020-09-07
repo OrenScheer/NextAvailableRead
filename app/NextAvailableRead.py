@@ -69,7 +69,7 @@ def get_titles(session, search):
     reviews = [1]
     titles = []
     while len(reviews) > 0:
-        r = session.post("https://www.goodreads.com/review/list.xml?v=2", data=search)
+        r = session.get("https://www.goodreads.com/review/list.xml?v=2", data=search)
         print(r)
         root = ET.fromstring(r.content)
         reviews = root.find("reviews")
@@ -123,6 +123,8 @@ session = OAuth1Session(
 search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "sort":"random"}
 shelves = get_shelves(session, search={"id": "64346486"})
 print(shelves)
+r = session.get("https://www.goodreads.com/api/auth_user")
+print(r.content)
 titles = get_titles(session, search)
 #print(titles)
 count = 0
