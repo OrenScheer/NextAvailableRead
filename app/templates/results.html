@@ -5,7 +5,17 @@
 </head>
 
 <body>
-    <p>{{ first_title }}</p>
+    <ul>
+        {% for book in books %}
+        <img src="{{ book.image_link }}">
+        <strong>{{ book.title }}</strong> by {{ book.author }}</p>
+        <ul>
+        <li>{{ book.page_count }} pages, published in {{ book.year }}</li>
+        <li><a href="{{ book.goodreads_link }}" target="_blank">Goodreads link</a></li>
+        <li><a href="{{ book.opl_link }}" target="_blank">OPL link</a></li>
+        </ul>
+        {% endfor %}
+    </ul>
 </body>
 
 

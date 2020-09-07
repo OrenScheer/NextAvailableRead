@@ -8,6 +8,7 @@ from app.forms import BookQueryForm
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
+from app.Book import Book
 
 def get_shelves(goodreads_session, search):
     r = goodreads_session.get("https://www.goodreads.com/shelf/list.xml", params=search)
@@ -32,25 +33,35 @@ def get_titles(goodreads_session, search):
         # for child in reviews[0].find("book"):
             # print(child.tag, child.attrib, child.text)
         for review in reviews:
-            titles.append((review.find("book").find("title_without_series").text, review.find("book").find("authors").find("author").find("name").text))
+            book = review.find("book")
+            titles.append(Book(
+                book.find("title_without_series").text, 
+                book.find("authors").find("author").find("name").text, 
+                book.find("num_pages").text,
+                book.find("publication_year").text,
+                book.find("link").text,
+                book.find("image_url").text
+            ))
         search["page"] = str(int(search["page"]) + 1)
     return titles
 
-def available(title, author):
+def available(book):
     # Important classes: 
     # cp-availability-status is the availability status of the item
     # author-link is the author (just the a tags)
     # title-content is the title
     # cp-format-indicator is the format...might have to narrow down since there are multiple tags
-    URL = "https://ottawa.bibliocommons.com/v2/search?query=" + quote('"' + title + '"' + " " + '"' + author + '"').replace(' ', '+') + "&searchType=keyword"
+    URL = "https://ottawa.bibliocommons.com/v2/search?query=" + quote('"' + book.title + '"' + " " + '"' + book.author + '"').replace(' ', '+') + "&searchType=keyword"
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     availability = soup.find_all(class_='cp-availability-status')
     if len(availability) == 0:
         return False
     formats = soup.find_all(class_='cp-format-indicator')[::3] # There are three indicators of this class for each item's format
+    link = soup.find_all(class_='cp-title')[0].find("a")['href'] # Cheating, it may not be the right link
     for a, f in zip(availability, formats):
         if "available" in a.text.lower() and "ebook" in f.text.lower():
+            book.opl_link = "https://ottawa.bibliocommons.com" + link
             return True
     return False
 
@@ -86,15 +97,15 @@ def index():
             titles = get_titles(goodreads_session, search)
             count = 0
             i = 0
-            books = []
+            available_books = []
             print("got titles")
             while i < len(titles) and count < int(form.number_of_books.data):
-                if available(titles[i][0], titles[i][1]):
-                    books.append((titles[i][0], titles[i][1]))
+                if available(titles[i]):
+                    available_books.append(titles[i])
                     count += 1
-                    print("one available")
+                    print("one available", i, count)
                 i += 1
-            return render_template("results.html", first_title=books[0][0])
+            return render_template("results.html", books=available_books)
         return render_template("index.html", authorized=True, form=form)
     else:
         authorize_url = goodreads.get_authorize_url(request_token)

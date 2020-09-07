@@ -7,6 +7,7 @@ import random
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
+from Book import Book
 
 # Load .env file which has user's API keys
 dotenv.load_dotenv()
@@ -80,25 +81,36 @@ def get_titles(session, search):
         # for child in reviews[0].find("book"):
             # print(child.tag, child.attrib, child.text)
         for review in reviews:
-            titles.append((review.find("book").find("title_without_series").text, review.find("book").find("authors").find("author").find("name").text))
+            book = review.find("book")
+            titles.append(Book(
+                book.find("title_without_series").text, 
+                book.find("authors").find("author").find("name").text, 
+                book.find("num_pages").text,
+                book.find("publication_year").text,
+                book.find("link").text,
+                book.find("image_url").text
+            ))
         search["page"] = str(int(search["page"]) + 1)
     return titles
 
-def available(title, author):
+def available(book):
     # Important classes: 
     # cp-availability-status is the availability status of the item
     # author-link is the author (just the a tags)
     # title-content is the title
     # cp-format-indicator is the format...might have to narrow down since there are multiple tags
-    URL = "https://ottawa.bibliocommons.com/v2/search?query=" + quote('"' + title + '"' + " " + '"' + author + '"').replace(' ', '+') + "&searchType=keyword"
+    URL = "https://ottawa.bibliocommons.com/v2/search?query=" + quote('"' + book.title + '"' + " " + '"' + book.author + '"').replace(' ', '+') + "&searchType=keyword"
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     availability = soup.find_all(class_='cp-availability-status')
+    link = soup.find_all(class_='cp-title')[0].find("a")['href']
+    print(link)
     if len(availability) == 0:
         return False
     formats = soup.find_all(class_='cp-format-indicator')[::3] # There are three indicators of this class for each item's format
     for a, f in zip(availability, formats):
         if "available" in a.text.lower() and "ebook" in f.text.lower():
+            book.opl_link = "https://www.ottawa.bibliocommons.com" + link
             return True
     return False
 
@@ -120,7 +132,7 @@ session = OAuth1Session(
     access_token = os.getenv("ACCESS_TOKEN"),
     access_token_secret = os.getenv("ACCESS_TOKEN_SECRET"),
 )
-search = {"id": "64346486", "shelf": "to-read", "page": "1", "per_page": "200", "sort":"random"}
+search = {"id": "64346486", "shelf": "read", "page": "1", "per_page": "200", "sort":"random"}
 shelves = get_shelves(session, search={"id": "64346486"})
 print(shelves)
 r = session.get("https://www.goodreads.com/api/auth_user")
@@ -129,8 +141,8 @@ titles = get_titles(session, search)
 #print(titles)
 count = 0
 i = 0
-while i < len(titles) and count < 2:
-    if available(titles[i][0], titles[i][1]):
+while i < len(titles) and count < 10:
+    if available(titles[i]):
         print(titles[i], count, i)
         count += 1
     i += 1
