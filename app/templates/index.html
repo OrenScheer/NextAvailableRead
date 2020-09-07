@@ -6,6 +6,16 @@
 
 <body>
     <h1>Welcome to NextAvailableRead</h1>
+    {% if not authorized %}
+    <p>You must first authorize access to your Goodreads account: <a href="{{ authorize_url }}" target="_blank">Authorize here</a></p>
+    {% else %}
+    <p>Thank you for authorizing. To authorize a different account, rerun the app.</p>
+    <ul>
+        {% for shelf in shelves %}
+        <li>{{ shelf }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 </body>
 
 

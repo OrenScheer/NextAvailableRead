@@ -69,7 +69,8 @@ def get_titles(session, search):
     reviews = [1]
     titles = []
     while len(reviews) > 0:
-        r = session.get("https://www.goodreads.com/review/list.xml?v=2", params=search)
+        r = session.post("https://www.goodreads.com/review/list.xml?v=2", data=search)
+        print(r)
         root = ET.fromstring(r.content)
         reviews = root.find("reviews")
         # Print all the different tags, attributes, and text from a specific book
