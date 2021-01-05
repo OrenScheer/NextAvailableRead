@@ -36,11 +36,20 @@ def get_shelves(user_id):
     page = requests.get(URL)
     soup = BeautifulSoup(page.content, 'html.parser')
     shelves = soup.find_all(class_='userShelf')
-    pattern = re.compile("(\s*)(.*)\(")
-    shelves = [pattern.match(shelf.text).group(2).strip() for shelf in shelves]
-    return shelves
+    res = {}
+    for shelf in shelves:
+        text = shelf.text.strip()
+        res[text[:text.find("(")].strip("\u200e").strip().lower()] = shelf.find("a")['href']
+    return res
 
-def get_titles(user_id, shelf):
+def get_titles(user_id, extra_url):
+    URL = "https://www.goodreads.com" + extra_url
+    page = requests.get(URL)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    #f = open("text.txt", "w")
+    #f.write(str(soup.text.encode('utf8')))
+    #f.close()
+    print(URL)
     titles = []
     return titles
 
@@ -66,15 +75,14 @@ def index():
     #return render_template("index.html", authorized=True, form=form)
     user_id = input("Please enter your Goodreads id: ")
     shelves = get_shelves(user_id)
-    shelves = [shelf.lower() for shelf in shelves]
     print("Please enter one of the following options:")
-    for shelf in shelves:
+    for shelf in shelves.keys():
         print(shelf)
     shelf_choice = input("Enter your selection here: ").lower()
     if shelf_choice not in shelves:
         print("This is not one of your shelves. Bye.")
         return
-    titles = get_shelves(user_id, shelf_choice)
+    titles = get_titles("64346486", shelves[shelf_choice])
     i = 0
     find_num = 5
     count = 0
