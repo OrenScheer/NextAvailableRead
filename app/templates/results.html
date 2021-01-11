@@ -7,7 +7,7 @@
 <body>
     <ul>
         {% for book in books %}
-        <img src="{{ book.image_link }}">
+        <img src="{{ book.image_link }}" width="100px">
         <strong>{{ book.title }}</strong> by {{ book.author }}</p>
         <ul>
         <li>{{ book.page_count }} pages, published in {{ book.year }}</li>
