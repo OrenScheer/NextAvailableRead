@@ -6,10 +6,6 @@
 
 <body>
     <h1>Welcome to NextAvailableRead</h1>
-    {% if not authorized %}
-    <p>You must first authorize access to your Goodreads account: <a href="{{ authorize_url }}" target="_blank">Authorize here</a></p>
-    {% else %}
-    <p>Thank you for authorizing. To authorize a different account, rerun the app.</p>
     <form action="" method="post" novalidate>
         {{ form.hidden_tag() }}
         <p>
@@ -28,7 +24,6 @@
         </p>
         <p>{{ form.submit() }}</p>
     </form>
-    {% endif %}
 </body>
 
 

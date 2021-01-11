@@ -3,47 +3,14 @@ from flask import render_template, request, session, redirect
 import os
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
-from rauth.service import OAuth1Service, OAuth1Session
 from app.forms import BookQueryForm
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
+import re
+import math
+import random
 from app.Book import Book
-
-def get_shelves(goodreads_session, search):
-    r = goodreads_session.get("https://www.goodreads.com/shelf/list.xml", params=search)
-    root = ET.fromstring(r.content)
-    shelves = root.find("shelves")
-    ans = []
-    for shelf in shelves:
-        ans.append(shelf.find("name").text)
-    return ans
-
-def get_titles(goodreads_session, search):
-    reviews = [1]
-    titles = []
-    while len(reviews) > 0:
-        r = goodreads_session.get("https://www.goodreads.com/review/list.xml?v=2", data=search)
-        root = ET.fromstring(r.content)
-        reviews = root.find("reviews")
-        # Print all the different tags, attributes, and text from a specific book
-        # Important tags
-        # itlte, title_without_series, image_url, link, num_pages, publication_year, average_rating, ratings_count, description
-        # Author can be found in .find("authors").find("author").find("name").text
-        # for child in reviews[0].find("book"):
-            # print(child.tag, child.attrib, child.text)
-        for review in reviews:
-            book = review.find("book")
-            titles.append(Book(
-                book.find("title_without_series").text, 
-                book.find("authors").find("author").find("name").text, 
-                book.find("num_pages").text,
-                book.find("publication_year").text,
-                book.find("link").text,
-                book.find("image_url").text
-            ))
-        search["page"] = str(int(search["page"]) + 1)
-    return titles
 
 def available(book):
     # Important classes: 
@@ -65,48 +32,64 @@ def available(book):
             return True
     return False
 
+def get_shelves(user_id):
+    # Returns list of a user's Goodreads shelves
+    URL = "https://www.goodreads.com/review/list/" + str(user_id)
+    page = requests.get(URL)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    shelves = soup.find_all(class_='userShelf')
+    pattern = re.compile("(.*)(\()(\d*)")
+    res = {}
+    for shelf in shelves:
+        text = shelf.text.strip()
+        res[text[:text.find("(")].strip("\u200e").strip().lower()] = (shelf.find("a")['href'] + "&print=true", 
+            int(pattern.match(text).group(3))) 
+    return res
+
+def get_titles(user_id, extra_url, number_of_books):
+    URL = "https://www.goodreads.com" + extra_url + "&page=0"
+    number_of_pages = math.ceil(number_of_books / 20)
+    current_page = 1
+    titles = []
+    while current_page <= number_of_pages:
+        print(current_page)
+        URL = URL.replace("&page="+str(current_page-1), "&page="+str(current_page))
+        page = requests.get(URL)
+        soup = BeautifulSoup(page.content, 'html.parser')
+        books = soup.find_all(class_="bookalike review")
+        for book in books:
+            title = book.find(class_="field title").find(class_="value").text.strip()
+            if ((index := title.find("(")) != -1):
+                title = title[:index].strip()
+            author = " ".join(book.find(class_ = "field author").find("a").text.split(",")[::-1]).strip()
+            page_count = page_count if (page_count := (book.find(class_="field num_pages").find(class_="value").text.replace("pp", "").replace(",", "").strip())).isdigit() else 0
+            rating = float(book.find(class_="field avg_rating").find(class_="value").text.strip())
+            goodreads_link = "https://goodreads.com" + book.find("a")["href"]
+            image_link = book.find("img")["src"].replace("_SX50_", "").replace("_SY75_", "").replace("..", ".")
+            titles.append(Book(title, author, page_count, rating, goodreads_link, image_link))
+        current_page += 1
+    return titles
+
 @app.route('/', methods=["GET", "POST"])
 @app.route('/index', methods=["GET", "POST"])
 def index():
-    goodreads = OAuth1Service(
-        consumer_key=app.config.get("API_KEY"), # Are stored as environment variables in .env file
-        consumer_secret=app.config.get("API_SECRET"),
-        name='goodreads',
-        request_token_url='https://www.goodreads.com/oauth/request_token',
-        authorize_url='https://www.goodreads.com/oauth/authorize',
-        access_token_url='https://www.goodreads.com/oauth/access_token',
-        base_url='https://www.goodreads.com/'
-    )
-
-    request_token, request_token_secret = goodreads.get_request_token(header_auth=True)
-    if request.args.get("oauth_token") and request.args.get("authorize") == "1":
-        goodreads_session = OAuth1Session(
-            consumer_key = app.config.get("API_KEY"),
-            consumer_secret = app.config.get("API_SECRET"),
-            access_token = request.args.get("oauth_token")
-            #access_token = "TTjLG5S8HrmiJxrQvzvaoQ",
-            #access_token_secret = "pDiGmf2G2qUx1HQyQdmsJAmzSXOuWtbuJOIonggs"
-        )
-        session["access_token"] = request.args.get("oauth_token")
-        #r = goodreads_session.get("https://www.goodreads.com/api/auth_user")
-        form = BookQueryForm()
-        form.shelf.choices = get_shelves(goodreads_session, search={"id": "64346486"})
-        if form.validate_on_submit():
-            #print(r.content)
-            search = {"id": "64346486", "shelf": form.shelf.data, "page": "1", "per_page": "200", "sort":"random"}
-            titles = get_titles(goodreads_session, search)
-            count = 0
-            i = 0
-            available_books = []
-            print("got titles")
-            while i < len(titles) and count < int(form.number_of_books.data):
-                if available(titles[i]):
-                    available_books.append(titles[i])
-                    count += 1
-                    print("one available", i, count)
-                i += 1
-            return render_template("results.html", books=available_books)
-        return render_template("index.html", authorized=True, form=form)
-    else:
-        authorize_url = goodreads.get_authorize_url(request_token)
-        return render_template("index.html", authorized=False, authorize_url=authorize_url)
+    form = BookQueryForm()
+    shelves = get_shelves("64346486")
+    form.shelf.choices = list(shelves.keys())
+    if form.validate_on_submit():
+       #print(r.content)
+       count = 0
+       i = 0
+       titles = get_titles("64346486", shelves[form.shelf.data][0], shelves[form.shelf.data][1])
+       random.shuffle(titles)
+       available_books = []
+       print("got titles")
+       while i < len(titles) and count < int(form.number_of_books.data):
+           if available(titles[i]):
+               available_books.append(titles[i])
+               count += 1
+               print("one available", i, count)
+           i += 1
+       return render_template("results.html", books=available_books)
+    return render_template("index.html", form=form)
+    
