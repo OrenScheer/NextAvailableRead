@@ -24,7 +24,7 @@ const ColorModeSwitcher: React.FC<ColorModeSwitcherProps> = () => {
       onClick={toggleColorMode}
       icon={<SwitchIcon />}
       aria-label={`Switch to ${text} mode`}
-      justifySelf="flex-end"
+      alignSelf="flex-end"
     />
   );
 };

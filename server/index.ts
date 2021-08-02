@@ -1,15 +1,19 @@
 import express, { Application, Request, Response, NextFunction } from "express";
 import axios from "axios";
 import cheerio from "cheerio";
+import cors from "cors";
 
 const app: Application = express();
-const port = 5000;
+const port = 5309;
 
 type Shelf = {
   name: string;
-  url: URL;
+  url: string;
   numberOfBooks: number;
 };
+
+app.use(cors({ origin: true }));
+app.use(express.json());
 
 app.get("/users/:userID/shelves", (req: Request, res: Response) => {
   const { userID } = req.params;
@@ -28,16 +32,19 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
             .replace("\u200e", "")
             .trim()
             .toLowerCase(),
-          url: new URL(`https://goodreads.com${link}&print=true`),
+          url: `https://goodreads.com${link}&print=true`,
           numberOfBooks: parseInt(
             text.substring(text.indexOf("(") + 1, text.indexOf(")")),
             10
           ),
         });
       });
-      res.status(200).send({ data: shelves });
+      res.status(200).send(shelves);
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {
+      console.log(err);
+      res.status(404).send();
+    });
 });
 
 app.listen(port, () => console.log(`Server is listening on port ${port}!`));
