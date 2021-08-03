@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState } from "react";
+import { ChangeEvent, ReactElement, useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 import * as React from "react";
 import {
@@ -11,22 +11,20 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
+  Flex,
 } from "@chakra-ui/react";
+import { Shelf } from "../types";
 
 type ShelfProps = {
   userID: string;
+  setShelf: React.Dispatch<any>;
 };
 
-type Shelf = {
-  name: string;
-  url: string;
-  numberOfBooks: number;
-};
-
-const ShelfSelector = ({ userID }: ShelfProps): ReactElement => {
+const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [error, setError] = useState(false);
+  const [selectedShelfUrl, setSelectedShelfUrl] = useState<string>();
 
   useEffect(() => {
     axios
@@ -40,29 +38,36 @@ const ShelfSelector = ({ userID }: ShelfProps): ReactElement => {
       .finally(() => {
         setIsLoaded(true);
       });
-  });
+  }, []);
   return (
     <>
       {isLoaded ? (
-        <RadioGroup>
+        <RadioGroup
+          value={selectedShelfUrl}
+          onChange={(nextValue: string) => {
+            setSelectedShelfUrl(nextValue);
+            setShelf(shelves.find((shelf) => shelf.url === nextValue));
+          }}
+        >
           <Stack direction="column">
-            {shelves.map(({ name, url, numberOfBooks }) => (
+            {shelves.map(({ _id, url, numberOfBooks }) => (
               <Radio
                 value={url}
+                key={_id}
                 size="lg"
                 colorScheme="teal"
                 isDisabled={numberOfBooks < 1}
               >
-                {`${name} - ${numberOfBooks} books`}
+                {`${_id} - ${numberOfBooks} books`}
               </Radio>
             ))}
           </Stack>
         </RadioGroup>
       ) : (
-        <>
-          <Spinner size="xl" color="teal" m={5} />
+        <Flex direction="column" alignItems="flex-start">
+          <Spinner size="xl" color="teal" mb={5} />
           <Text>Getting shelves...</Text>
-        </>
+        </Flex>
       )}
       {error && (
         <Alert
@@ -72,7 +77,7 @@ const ShelfSelector = ({ userID }: ShelfProps): ReactElement => {
           justifyContent="center"
           textAlign="center"
           height="200px"
-          width="400px"
+          width="300px"
         >
           <AlertIcon boxSize="40px" mr={0} />
           <AlertTitle mt={4} mb={1} fontSize="lg">
