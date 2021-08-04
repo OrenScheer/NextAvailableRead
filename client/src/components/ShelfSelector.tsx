@@ -12,6 +12,7 @@ import {
   AlertTitle,
   AlertDescription,
   Flex,
+  Badge,
 } from "@chakra-ui/react";
 import { Shelf } from "../types";
 
@@ -50,7 +51,7 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
           }}
         >
           <Stack direction="column">
-            {shelves.map(({ _id, url, numberOfBooks }) => (
+            {shelves.map(({ _id, url, numberOfBooks, numberOfStoredBooks }) => (
               <Radio
                 value={url}
                 key={_id}
@@ -58,7 +59,17 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
                 colorScheme="teal"
                 isDisabled={numberOfBooks < 1}
               >
-                {`${_id} - ${numberOfBooks} books`}
+                <Text d="flex" alignItems="center">
+                  {`${_id} - ${numberOfBooks} books`}
+                  <Badge
+                    ml={2}
+                    colorScheme={numberOfStoredBooks >= 1 ? "green" : "red"}
+                  >
+                    {numberOfStoredBooks >= 1
+                      ? `${numberOfStoredBooks} in database`
+                      : "Not yet in database"}
+                  </Badge>
+                </Text>
               </Radio>
             ))}
           </Stack>

@@ -14,4 +14,5 @@ module.exports = {
   parserOptions: {
     project: "./tsconfig.json",
   },
+  rules: { "no-underscore-dangle": "off" },
 };

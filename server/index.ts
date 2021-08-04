@@ -22,11 +22,22 @@ connect(mongoString, {
   .then(() => {})
   .catch(() => {});
 
+interface Book {
+  title: string;
+  author: string;
+  pageCount: number;
+  rating: number;
+  goodreadsUrl: string;
+  imageUrl: string;
+  libraryUrl: string;
+}
+
 interface Shelf {
   _id: string;
   url: string;
   numberOfBooks: number;
   numberOfStoredBooks: number;
+  books?: Book[];
 }
 
 interface User {
@@ -34,17 +45,29 @@ interface User {
   shelves: Shelf[];
 }
 
+const BookSchema = new Schema<Book>({
+  title: String,
+  author: String,
+  pageCount: Number,
+  rating: Number,
+  goodreadsUrl: String,
+  imageUrl: String,
+  libraryUrl: String,
+});
+
 const ShelfSchema = new Schema<Shelf>({
   _id: String,
   url: String,
   numberOfBooks: Number,
   numberOfStoredBooks: Number,
+  books: [BookSchema],
 });
 const UserSchema = new Schema<User>({
   _id: String,
-  shelves: [ShelfSchema],
+  shelves: [],
 });
 const UserModel = model<User>("User", UserSchema);
+const ShelfModel = model<Shelf>("Shelf", ShelfSchema);
 
 app.use(cors({ origin: true }));
 app.use(express.json());
@@ -75,18 +98,48 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
         };
         shelves.push(newShelf);
       });
-      const newUser = new UserModel({ _id: userID, shelves });
-      newUser
-        .save()
-        .then(() => {
-          console.log("Saved!");
+      UserModel.findOneAndDelete({ _id: userID }, {})
+        .then((result) => {
+          if (result && "shelves" in result) {
+            for (let i = 0; i < shelves.length; i += 1) {
+              const matchedShelf = result.shelves.find(
+                (shelf) => shelf._id === shelves[i]._id
+              );
+              if (matchedShelf) {
+                // eslint-disable-next-line no-param-reassign
+                shelves[i].numberOfStoredBooks =
+                  matchedShelf.numberOfStoredBooks;
+              }
+            }
+          }
         })
-        .catch((err) => console.log(err));
-      res.status(200).send(shelves);
+        .catch(() => {})
+        .finally(() => {
+          const newUser = new UserModel({ _id: userID, shelves });
+          console.log(shelves);
+          newUser
+            .save()
+            .then(() => {
+              console.log("Saved!");
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+          res.status(200).send(shelves);
+        });
     })
     .catch(() => {
       res.status(404).send();
     });
+});
+
+interface BooksRequest {
+  userID: string;
+  shelfID: string;
+}
+
+app.post("/books", (req: Request, res: Response) => {
+  const { userID, shelfID } = req.body as BooksRequest;
 });
 
 app.listen(port, () => console.log(`Server is listening on port ${port}!`));

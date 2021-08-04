@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { ChangeEvent, useState } from "react";
+import { FaBook } from "react-icons/fa";
 import { Shelf } from "./types";
 
 import ColorModeSwitcher from "./ColorModeSwitcher";
@@ -78,7 +79,10 @@ const App: React.FC = () => {
       alignItems="center"
     >
       <Flex width="100%" justifyContent="space-between" mb={5}>
-        <Heading>NextAvailableRead</Heading>
+        <Heading d="flex" alignItems="center" color="#38B2AC">
+          <FaBook style={{ marginRight: "10px" }} />
+          NextAvailableRead
+        </Heading>
         <ColorModeSwitcher />
       </Flex>
       <Flex justifyContent="space-between" direction="column" width="100%">
