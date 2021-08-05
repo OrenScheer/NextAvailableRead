@@ -1,26 +1,26 @@
 import express, { Application, Request, Response } from "express";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import cheerio from "cheerio";
 import cors from "cors";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
+import { Client, Query, QueryResult, QueryResultRow } from "pg";
 
-const { Schema, model, connect } = mongoose;
+import query from "./db";
 
 const app: Application = express();
 const port = 5309;
 dotenv.config();
 
-const mongoString = `mongodb+srv://${process.env.DB_USERNAME as string}:${
-  process.env.DB_PASSWORD as string
-}@nextavailableread.nkzxh.mongodb.net/NextAvailableRead?retryWrites=true&w=majority`;
-
-connect(mongoString, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => {})
-  .catch(() => {});
+const client = new Client();
+client
+  .connect()
+  .then((res) => {
+    console.log("Connected to db");
+  })
+  .catch((err) => {
+    console.log("Connection to db failed");
+    console.log(err);
+  });
 
 interface Book {
   title: string;
@@ -33,104 +33,93 @@ interface Book {
 }
 
 interface Shelf {
-  _id: string;
+  name: string;
   url: string;
   numberOfBooks: number;
   numberOfStoredBooks: number;
-  books?: Book[];
 }
-
-interface User {
-  _id: string;
-  shelves: Shelf[];
-}
-
-const BookSchema = new Schema<Book>({
-  title: String,
-  author: String,
-  pageCount: Number,
-  rating: Number,
-  goodreadsUrl: String,
-  imageUrl: String,
-  libraryUrl: String,
-});
-
-const ShelfSchema = new Schema<Shelf>({
-  _id: String,
-  url: String,
-  numberOfBooks: Number,
-  numberOfStoredBooks: Number,
-  books: [BookSchema],
-});
-const UserSchema = new Schema<User>({
-  _id: String,
-  shelves: [],
-});
-const UserModel = model<User>("User", UserSchema);
-const ShelfModel = model<Shelf>("Shelf", ShelfSchema);
 
 app.use(cors({ origin: true }));
 app.use(express.json());
 
 app.get("/users/:userID/shelves", (req: Request, res: Response) => {
-  const { userID } = req.params;
-  const url = `https://www.goodreads.com/review/list/${userID}`;
-  axios
-    .get(url)
-    .then((page) => {
-      const $ = cheerio.load(page.data);
-      const shelves: Shelf[] = [];
-      $(".userShelf > a").each((_, e) => {
-        const text = $(e).text();
-        const link = $(e).attr("href") as string;
-        const newShelf: Shelf = {
-          _id: text
-            .substring(0, text.indexOf("("))
-            .replace("\u200e", "")
-            .trim()
-            .toLowerCase(),
-          url: `https://goodreads.com${link}&print=true`,
-          numberOfBooks: parseInt(
-            text.substring(text.indexOf("(") + 1, text.indexOf(")")),
-            10
-          ),
-          numberOfStoredBooks: 0,
-        };
-        shelves.push(newShelf);
-      });
-      UserModel.findOneAndDelete({ _id: userID }, {})
-        .then((result) => {
-          if (result && "shelves" in result) {
-            for (let i = 0; i < shelves.length; i += 1) {
-              const matchedShelf = result.shelves.find(
-                (shelf) => shelf._id === shelves[i]._id
-              );
-              if (matchedShelf) {
-                // eslint-disable-next-line no-param-reassign
-                shelves[i].numberOfStoredBooks =
-                  matchedShelf.numberOfStoredBooks;
-              }
-            }
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          const newUser = new UserModel({ _id: userID, shelves });
-          console.log(shelves);
-          newUser
-            .save()
-            .then(() => {
-              console.log("Saved!");
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-          res.status(200).send(shelves);
-        });
-    })
-    .catch(() => {
-      res.status(404).send();
+  (async () => {
+    const { userID } = req.params;
+    const url = `https://www.goodreads.com/review/list/${userID}`;
+
+    const page = await axios.get(url).catch((err) => {
+      console.log("Failed to get list of shelves.");
+      throw err;
     });
+
+    await query("INSERT INTO account(id) VALUES($1) ON CONFLICT DO NOTHING", [
+      userID,
+    ]).catch((err) => {
+      console.log("Failed to insert user.");
+      throw err;
+    });
+
+    const $ = cheerio.load(page.data);
+    const shelves: Shelf[] = [];
+    const promises: Promise<Shelf>[] = [];
+    $(".userShelf > a").each((_, e) => {
+      const text = $(e).text();
+      const link = $(e).attr("href") as string;
+      const newShelf: Shelf = {
+        name: text
+          .substring(0, text.indexOf("("))
+          .replace("\u200e", "")
+          .trim()
+          .toLowerCase(),
+        url: `https://goodreads.com${link}&print=true`,
+        numberOfBooks: parseInt(
+          text.substring(text.indexOf("(") + 1, text.indexOf(")")),
+          10
+        ),
+        numberOfStoredBooks: 0,
+      };
+
+      interface QueryResultRowNumberOfStoredBooks extends QueryResultRow {
+        number_of_stored_books: number;
+      }
+
+      promises.push(
+        query(
+          "INSERT INTO shelf(account_id, shelf, url, number_of_books, number_of_stored_books) " +
+            "VALUES($1, $2, $3, $4, $5) " +
+            "ON CONFLICT (account_id, shelf) " +
+            "DO UPDATE SET number_of_stored_books = shelf.number_of_stored_books " +
+            "RETURNING number_of_stored_books",
+          [
+            userID,
+            newShelf.name,
+            newShelf.url,
+            newShelf.numberOfBooks.toString(),
+            newShelf.numberOfStoredBooks.toString(),
+          ]
+        )
+          .then((result: QueryResult<QueryResultRowNumberOfStoredBooks>) => {
+            newShelf.numberOfStoredBooks =
+              result.rows[0].number_of_stored_books;
+            return newShelf;
+          })
+          .catch((err) => {
+            console.log("Failed to get shelf.");
+            throw err;
+          })
+      );
+    });
+    const result = await Promise.all(promises).catch((err) => {
+      throw err;
+    });
+    if (result.length === 0) {
+      throw new Error("You have no shelves!");
+    }
+    res.status(200).send(result);
+  })().catch((err) => {
+    console.log(err);
+    res.status(404).send();
+  });
 });
 
 interface BooksRequest {

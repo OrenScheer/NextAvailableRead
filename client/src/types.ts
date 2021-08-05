@@ -1,5 +1,5 @@
 export type Shelf = {
-  _id: string;
+  name: string;
   url: string;
   numberOfBooks: number;
   numberOfStoredBooks: number;

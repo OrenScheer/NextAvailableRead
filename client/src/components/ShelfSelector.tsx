@@ -51,27 +51,29 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
           }}
         >
           <Stack direction="column">
-            {shelves.map(({ _id, url, numberOfBooks, numberOfStoredBooks }) => (
-              <Radio
-                value={url}
-                key={_id}
-                size="lg"
-                colorScheme="teal"
-                isDisabled={numberOfBooks < 1}
-              >
-                <Text d="flex" alignItems="center">
-                  {`${_id} - ${numberOfBooks} books`}
-                  <Badge
-                    ml={2}
-                    colorScheme={numberOfStoredBooks >= 1 ? "green" : "red"}
-                  >
-                    {numberOfStoredBooks >= 1
-                      ? `${numberOfStoredBooks} in database`
-                      : "Not yet in database"}
-                  </Badge>
-                </Text>
-              </Radio>
-            ))}
+            {shelves.map(
+              ({ name, url, numberOfBooks, numberOfStoredBooks }) => (
+                <Radio
+                  value={url}
+                  key={name}
+                  size="lg"
+                  colorScheme="teal"
+                  isDisabled={numberOfBooks < 1}
+                >
+                  <Text d="flex" alignItems="center">
+                    {`${name} - ${numberOfBooks} books`}
+                    <Badge
+                      ml={2}
+                      colorScheme={numberOfStoredBooks >= 1 ? "green" : "red"}
+                    >
+                      {numberOfStoredBooks >= 1
+                        ? `${numberOfStoredBooks} in database`
+                        : "Not yet in database"}
+                    </Badge>
+                  </Text>
+                </Radio>
+              )
+            )}
           </Stack>
         </RadioGroup>
       ) : (
