@@ -114,6 +114,38 @@ interface BooksRequest {
   shelf: string;
 }
 
+const isAvailable = async (book: Book): Promise<[boolean, string]> => {
+  const url = `https://ottawa.bibliocommons.com/v2/search?query=${encodeURI(
+    `"${book.title}"+"${book.author}"`
+  )}&searchType=keyword`;
+  let page;
+  try {
+    page = await axios.get(url);
+  } catch {
+    return [false, ""];
+  }
+  // Lots to improve here: reorganize methods/order, use direct link to ebook
+  const $ = cheerio.load(page.data);
+  const $elems = $(".cp-availability-status");
+  if ($elems.length === 0) {
+    return [false, ""];
+  }
+  const link = `https://ottawa.bibliocommons.com${
+    $(".cp-title").find("a").attr("href") as string
+  }`;
+  let found = false;
+  $(".format-info-main-content .cp-format-indicator").each((i, e) => {
+    const availability = $elems.eq(i).text();
+    if (
+      $(e).text().toLowerCase().includes("ebook") &&
+      availability.toLowerCase().includes("available")
+    ) {
+      found = true;
+    }
+  });
+  return [found, link];
+};
+
 app.post("/books", (req: Request, res: Response) => {
   (async () => {
     const { userID, shelf } = req.body as BooksRequest;
@@ -143,11 +175,11 @@ app.post("/books", (req: Request, res: Response) => {
       promises.push(
         axios
           .get(`${accessedShelf.url}&page=${i}`)
-          .then((page) => {
-            const scrapedBooks: Book[] = [];
+          .then(async (page) => {
             const $ = cheerio.load(page.data);
+            const bookPromises: Promise<[boolean, Book]>[] = [];
             $(".bookalike").each((_, e) => {
-              scrapedBooks.push({
+              const book: Book = {
                 title: $(e)
                   .find(".title")
                   .find(".value a")
@@ -179,9 +211,32 @@ app.post("/books", (req: Request, res: Response) => {
                   .replace("_SX50_", "")
                   .replace("_SY75_", "")
                   .replace("..", ".") as string,
-              });
+              };
+              bookPromises.push(
+                isAvailable(book)
+                  .then((isBookAvailable) => {
+                    const [isIt, link] = isBookAvailable;
+                    let x: [boolean, Book];
+                    if (isIt) {
+                      console.log(link);
+                      book.libraryUrl = link;
+                      x = [true, book];
+                    } else {
+                      x = [false, book];
+                    }
+                    return x;
+                  })
+                  .catch((err) => [false, book])
+              );
             });
-            return scrapedBooks;
+            const availableBooks = await Promise.all(bookPromises).catch(
+              (err) => {
+                throw err;
+              }
+            );
+            return availableBooks
+              .filter((pair) => pair[0])
+              .map((pair) => pair[1]);
           })
           .catch((err) => {
             console.log("Couldn't retrieve shelf from Goodreads url.");
@@ -193,6 +248,7 @@ app.post("/books", (req: Request, res: Response) => {
       throw err;
     });
     const books = result.flat();
+    console.log(books.length);
     if (result.length === 0) {
       throw new Error("You have no books!");
     }
