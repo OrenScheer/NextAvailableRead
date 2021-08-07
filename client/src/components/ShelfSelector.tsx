@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactElement, useEffect, useState } from "react";
+import { ReactElement, useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 import * as React from "react";
 import {
@@ -12,13 +12,12 @@ import {
   AlertTitle,
   AlertDescription,
   Flex,
-  Badge,
 } from "@chakra-ui/react";
 import { Shelf } from "../types";
 
 type ShelfProps = {
   userID: string;
-  setShelf: React.Dispatch<any>;
+  setShelf: React.Dispatch<Shelf>;
 };
 
 const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
@@ -33,7 +32,7 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
       .then((res: AxiosResponse<Shelf[]>) => {
         setShelves(res.data);
       })
-      .catch((err) => {
+      .catch(() => {
         setError(true);
       })
       .finally(() => {
@@ -47,33 +46,23 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
           value={selectedShelfUrl}
           onChange={(nextValue: string) => {
             setSelectedShelfUrl(nextValue);
-            setShelf(shelves.find((shelf) => shelf.url === nextValue));
+            setShelf(shelves.find((shelf) => shelf.url === nextValue) as Shelf);
           }}
         >
           <Stack direction="column">
-            {shelves.map(
-              ({ name, url, numberOfBooks, numberOfStoredBooks }) => (
-                <Radio
-                  value={url}
-                  key={name}
-                  size="lg"
-                  colorScheme="teal"
-                  isDisabled={numberOfBooks < 1}
-                >
-                  <Text d="flex" alignItems="center">
-                    {`${name} - ${numberOfBooks} books`}
-                    <Badge
-                      ml={2}
-                      colorScheme={numberOfStoredBooks >= 1 ? "green" : "red"}
-                    >
-                      {numberOfStoredBooks >= 1
-                        ? `${numberOfStoredBooks} in database`
-                        : "Not yet in database"}
-                    </Badge>
-                  </Text>
-                </Radio>
-              )
-            )}
+            {shelves.map(({ name, url, numberOfBooks }) => (
+              <Radio
+                value={url}
+                key={name}
+                size="lg"
+                colorScheme="teal"
+                isDisabled={numberOfBooks < 1}
+              >
+                <Text d="flex" alignItems="center">
+                  {`${name} - ${numberOfBooks} books`}
+                </Text>
+              </Radio>
+            ))}
           </Stack>
         </RadioGroup>
       ) : (

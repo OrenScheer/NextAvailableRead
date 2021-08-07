@@ -13,22 +13,26 @@ import {
   NumberInputStepper,
   NumberIncrementStepper,
   NumberDecrementStepper,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { ChangeEvent, useState } from "react";
 import { FaBook } from "react-icons/fa";
-import { Shelf } from "./types";
+import { Book, Shelf } from "./types";
 
 import ColorModeSwitcher from "./ColorModeSwitcher";
 import ShelfSelector from "./components/ShelfSelector";
+import BookList from "./components/BookList";
+
+const books: Book[] = [];
 
 const App: React.FC = () => {
-  const { nextStep, prevStep, setStep, reset, activeStep } = useSteps({
+  const { nextStep, prevStep, activeStep } = useSteps({
     initialStep: 0,
   });
 
   const [shelf, setShelf] = useState<Shelf>();
-
+  const bg = useColorModeValue("white", "gray.800");
   const [userID, setUserID] = useState("");
   const handleChange = (event: ChangeEvent<HTMLInputElement>) =>
     setUserID(event.target.value);
@@ -73,20 +77,43 @@ const App: React.FC = () => {
     <Box
       textAlign="center"
       fontSize="xl"
-      p={8}
+      px={8}
+      pb={8}
       d="flex"
       flexDir="column"
       alignItems="center"
+      bg={bg}
     >
-      <Flex width="100%" justifyContent="space-between" mb={5}>
+      <Flex
+        width="100%"
+        justifyContent="space-between"
+        pt={6}
+        pb={6}
+        pos="sticky"
+        top="0"
+        bg={bg}
+        zIndex="9"
+        height="100px"
+      >
         <Heading d="flex" alignItems="center" color="#38B2AC">
           <FaBook style={{ marginRight: "10px" }} />
           NextAvailableRead
         </Heading>
         <ColorModeSwitcher />
       </Flex>
-      <Flex justifyContent="space-between" direction="column" width="100%">
-        <Steps activeStep={activeStep} mb={8} orientation="vertical">
+      <Flex
+        direction="row"
+        width="100%"
+        justifyContent="space-between"
+        alignItems="flex-start"
+      >
+        <Steps
+          activeStep={activeStep}
+          mb={8}
+          orientation="vertical"
+          pos="sticky"
+          top="100px"
+        >
           {steps.map(({ label, content: stepContent }) => (
             <Step label={label} key={label}>
               <Flex minH="100px">
@@ -118,6 +145,7 @@ const App: React.FC = () => {
             </Step>
           ))}
         </Steps>
+        <BookList books={books} />
       </Flex>
     </Box>
   );
