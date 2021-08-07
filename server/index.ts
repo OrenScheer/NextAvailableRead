@@ -3,9 +3,6 @@ import axios from "axios";
 import cheerio from "cheerio";
 import cors from "cors";
 import dotenv from "dotenv";
-import { QueryResult, QueryResultRow } from "pg";
-
-import query from "./db";
 
 const app: Application = express();
 const port = 5309;
@@ -41,15 +38,8 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
       throw err;
     });
 
-    await query("INSERT INTO account(id) VALUES($1) ON CONFLICT DO NOTHING", [
-      userID,
-    ]).catch((err) => {
-      console.log("Failed to insert user.");
-      throw err;
-    });
-
     const $ = cheerio.load(page.data);
-    const promises: Promise<Shelf>[] = [];
+    const shelves: Shelf[] = [];
     $(".userShelf > a").each((_, e) => {
       const text = $(e).text();
       const link = $(e).attr("href") as string;
@@ -65,54 +55,17 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
           10
         ),
       };
-
-      interface QueryResultRowNumberOfStoredBooks extends QueryResultRow {
-        number_of_stored_books: number;
-      }
-
-      promises.push(
-        query(
-          "INSERT INTO shelf(account_id, shelf, url, number_of_books, number_of_stored_books) " +
-            "VALUES($1, $2, $3, $4, $5) " +
-            "ON CONFLICT (account_id, shelf) " +
-            "DO UPDATE SET number_of_stored_books = shelf.number_of_stored_books " +
-            "RETURNING number_of_stored_books",
-          [
-            userID,
-            newShelf.name,
-            newShelf.url,
-            newShelf.numberOfBooks.toString(),
-            "0",
-          ]
-        )
-          .then((result: QueryResult<QueryResultRowNumberOfStoredBooks>) => {
-            newShelf.numberOfStoredBooks =
-              result.rows[0].number_of_stored_books;
-            return newShelf;
-          })
-          .catch((err) => {
-            console.log("Failed to get shelf.");
-            throw err;
-          })
-      );
+      shelves.push(newShelf);
     });
-    const result = await Promise.all(promises).catch((err) => {
-      throw err;
-    });
-    if (result.length === 0) {
+    if (shelves.length === 0) {
       throw new Error("You have no shelves!");
     }
-    res.status(200).send(result);
+    res.status(200).send(shelves);
   })().catch((err) => {
     console.log(err);
     res.status(404).send();
   });
 });
-
-interface BooksRequest {
-  userID: string;
-  shelf: string;
-}
 
 const isAvailable = async (book: Book): Promise<[boolean, string]> => {
   const url = `https://ottawa.bibliocommons.com/v2/search?query=${encodeURI(
@@ -146,35 +99,24 @@ const isAvailable = async (book: Book): Promise<[boolean, string]> => {
   return [found, link];
 };
 
+interface BooksRequest {
+  url: string;
+  numberOfBooksOnShelf: number;
+  numberOfBooksRequested: number;
+}
+
 app.post("/books", (req: Request, res: Response) => {
   (async () => {
-    const { userID, shelf } = req.body as BooksRequest;
+    const { url, numberOfBooksOnShelf, numberOfBooksRequested } =
+      req.body as BooksRequest;
 
-    interface QueryResultRowShelf extends QueryResultRow {
-      url: string;
-      number_of_books: number;
-    }
-
-    const accessedShelf: Shelf = await query(
-      "SELECT url, number_of_books from shelf WHERE account_id = $1 AND shelf = $2",
-      [userID, shelf]
-    )
-      .then((result: QueryResult<QueryResultRowShelf>) => ({
-        userID,
-        name: shelf,
-        url: result.rows[0].url,
-        numberOfBooks: result.rows[0].number_of_books,
-      }))
-      .catch((err) => {
-        console.log("Failed to get shelf.");
-        throw err;
-      });
+    console.log(`number of books requested: ${numberOfBooksRequested}`);
 
     const promises: Promise<Book[]>[] = [];
-    for (let i = 1; i <= Math.ceil(accessedShelf.numberOfBooks / 20); i += 1) {
+    for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
       promises.push(
         axios
-          .get(`${accessedShelf.url}&page=${i}`)
+          .get(`${url}&page=${i}`)
           .then(async (page) => {
             const $ = cheerio.load(page.data);
             const bookPromises: Promise<[boolean, Book]>[] = [];
@@ -208,9 +150,11 @@ app.post("/books", (req: Request, res: Response) => {
                   .find("img")
                   .attr("src")
                   ?.toString()
-                  .replace("_SX50_", "")
-                  .replace("_SY75_", "")
-                  .replace("..", ".") as string,
+                  .replace("SX50", "")
+                  .replace("SY75", "")
+                  .replace("_", "")
+                  .replace("..", ".")
+                  .replace(".jpg", "._SX318_.jpg") as string,
               };
               bookPromises.push(
                 isAvailable(book)
@@ -226,7 +170,10 @@ app.post("/books", (req: Request, res: Response) => {
                     }
                     return x;
                   })
-                  .catch((err) => [false, book])
+                  .catch((err) => {
+                    console.log("ERROR checking availability");
+                    return [false, book];
+                  })
               );
             });
             const availableBooks = await Promise.all(bookPromises).catch(
@@ -249,10 +196,17 @@ app.post("/books", (req: Request, res: Response) => {
     });
     const books = result.flat();
     console.log(books.length);
+
+    // shuffle algorithm from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+    for (let i = books.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [books[i], books[j]] = [books[j], books[i]];
+    }
+
     if (result.length === 0) {
       throw new Error("You have no books!");
     }
-    res.status(200).send(books);
+    res.status(200).send(books.slice(0, numberOfBooksRequested));
   })().catch((err) => {
     console.log(err);
     res.status(404).send();

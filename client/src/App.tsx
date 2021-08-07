@@ -18,13 +18,30 @@ import {
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { ChangeEvent, useState } from "react";
 import { FaBook } from "react-icons/fa";
+import axios from "axios";
 import { Book, Shelf } from "./types";
 
 import ColorModeSwitcher from "./ColorModeSwitcher";
 import ShelfSelector from "./components/ShelfSelector";
 import BookList from "./components/BookList";
 
-const books: Book[] = [];
+const dummyBook: Book = {
+  title: "",
+  author: "",
+  pageCount: 0,
+  rating: 0,
+  goodreadsUrl: "",
+  imageUrl: "",
+  libraryUrl: "",
+};
+
+const createDummyBooksArray = (numberOfBooks: number): Book[] => {
+  const books: Book[] = [];
+  for (let i = 0; i < numberOfBooks; i += 1) {
+    books.push(dummyBook);
+  }
+  return books;
+};
 
 const App: React.FC = () => {
   const { nextStep, prevStep, activeStep } = useSteps({
@@ -32,6 +49,10 @@ const App: React.FC = () => {
   });
 
   const [shelf, setShelf] = useState<Shelf>();
+  const [books, setBooks] = useState<Book[]>([]);
+  const [isBookListVisible, setIsBookListVisible] = useState(false);
+  const [isBookListLoaded, setIsBookListLoaded] = useState(false);
+  const [numberOfBooks, setNumberOfBooks] = useState("1");
   const bg = useColorModeValue("white", "gray.800");
   const [userID, setUserID] = useState("");
   const handleChange = (event: ChangeEvent<HTMLInputElement>) =>
@@ -54,6 +75,8 @@ const App: React.FC = () => {
         defaultValue={1}
         min={1}
         max={shelf ? shelf.numberOfBooks : 1}
+        value={numberOfBooks}
+        onChange={(valueString) => setNumberOfBooks(valueString)}
       >
         <NumberInputField />
         <NumberInputStepper>
@@ -72,6 +95,25 @@ const App: React.FC = () => {
     },
     { label: "Select the number of books", content: stepThree },
   ];
+
+  const advance = () => {
+    nextStep();
+    if (activeStep === 2) {
+      setBooks(createDummyBooksArray(parseInt(numberOfBooks, 10)));
+      setIsBookListVisible(true);
+      axios
+        .post<Book[]>("http://localhost:5309/books", {
+          url: shelf?.url,
+          numberOfBooksOnShelf: shelf?.numberOfBooks,
+          numberOfBooksRequested: numberOfBooks,
+        })
+        .then((res) => {
+          setBooks(res.data);
+          setIsBookListLoaded(true);
+        })
+        .catch((err) => console.log(err));
+    }
+  };
 
   return (
     <Box
@@ -131,7 +173,7 @@ const App: React.FC = () => {
                         Previous step
                       </Button>
                       <Button
-                        onClick={nextStep}
+                        onClick={advance}
                         isDisabled={activeStep >= 3}
                         colorScheme="teal"
                         variant="solid"
@@ -145,7 +187,11 @@ const App: React.FC = () => {
             </Step>
           ))}
         </Steps>
-        <BookList books={books} />
+        <BookList
+          books={books}
+          isVisible={isBookListVisible}
+          isLoaded={isBookListLoaded}
+        />
       </Flex>
     </Box>
   );
