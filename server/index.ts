@@ -3,6 +3,11 @@ import axios from "axios";
 import cheerio from "cheerio";
 import cors from "cors";
 import dotenv from "dotenv";
+import BluebirdPromise from "bluebird";
+
+BluebirdPromise.config({
+  cancellation: true,
+});
 
 const app: Application = express();
 const port = 5309;
@@ -67,7 +72,7 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
   });
 });
 
-const isAvailable = async (book: Book): Promise<[boolean, string]> => {
+const isAvailable = async (book: Book): BluebirdPromise<[boolean, string]> => {
   const url = `https://ottawa.bibliocommons.com/v2/search?query=${encodeURI(
     `"${book.title}"+"${book.author}"`
   )}&searchType=keyword`;
@@ -112,14 +117,14 @@ app.post("/books", (req: Request, res: Response) => {
 
     console.log(`number of books requested: ${numberOfBooksRequested}`);
 
-    const promises: Promise<Book[]>[] = [];
+    const promises: PromiseLike<Book[]>[] = [];
     for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
       promises.push(
         axios
           .get(`${url}&page=${i}`)
-          .then(async (page) => {
+          .then((page) => {
+            const booksFromPage: Book[] = [];
             const $ = cheerio.load(page.data);
-            const bookPromises: Promise<[boolean, Book]>[] = [];
             $(".bookalike").each((_, e) => {
               const book: Book = {
                 title: $(e)
@@ -156,34 +161,9 @@ app.post("/books", (req: Request, res: Response) => {
                   .replace("..", ".")
                   .replace(".jpg", "._SX318_.jpg") as string,
               };
-              bookPromises.push(
-                isAvailable(book)
-                  .then((isBookAvailable) => {
-                    const [isIt, link] = isBookAvailable;
-                    let x: [boolean, Book];
-                    if (isIt) {
-                      console.log(link);
-                      book.libraryUrl = link;
-                      x = [true, book];
-                    } else {
-                      x = [false, book];
-                    }
-                    return x;
-                  })
-                  .catch((err) => {
-                    console.log("ERROR checking availability");
-                    return [false, book];
-                  })
-              );
+              booksFromPage.push(book);
             });
-            const availableBooks = await Promise.all(bookPromises).catch(
-              (err) => {
-                throw err;
-              }
-            );
-            return availableBooks
-              .filter((pair) => pair[0])
-              .map((pair) => pair[1]);
+            return booksFromPage;
           })
           .catch((err) => {
             console.log("Couldn't retrieve shelf from Goodreads url.");
@@ -191,22 +171,57 @@ app.post("/books", (req: Request, res: Response) => {
           })
       );
     }
-    const result = await Promise.all(promises).catch((err) => {
+    const result = await BluebirdPromise.all(promises).catch((err) => {
       throw err;
     });
-    const books = result.flat();
-    console.log(books.length);
+
+    const booksFromShelf = result.flat();
+
+    console.log("found books from Goodreads");
 
     // shuffle algorithm from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
-    for (let i = books.length - 1; i > 0; i -= 1) {
+    for (let i = booksFromShelf.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
-      [books[i], books[j]] = [books[j], books[i]];
+      [booksFromShelf[i], booksFromShelf[j]] = [
+        booksFromShelf[j],
+        booksFromShelf[i],
+      ];
     }
 
-    if (result.length === 0) {
+    const bookPromises: BluebirdPromise<Book>[] = [];
+    booksFromShelf.forEach((book, i, arr) => {
+      bookPromises.push(
+        isAvailable(book)
+          .then(([isIt, link]) => {
+            if (isIt) {
+              console.log(link);
+              // eslint-disable-next-line no-param-reassign
+              arr[i].libraryUrl = link;
+              return book;
+            }
+            throw new Error("Book is not available.");
+          })
+          .catch((err) => {
+            throw err;
+          })
+      );
+    });
+
+    const availableBooks = await BluebirdPromise.some(
+      bookPromises,
+      numberOfBooksRequested
+    ).catch((err) => {
+      throw err;
+    });
+
+    console.log(availableBooks.length);
+
+    if (availableBooks.length === 0) {
       throw new Error("You have no books!");
     }
-    res.status(200).send(books.slice(0, numberOfBooksRequested));
+    res.status(200).send(availableBooks);
+
+    bookPromises.forEach((promise) => promise.cancel());
   })().catch((err) => {
     console.log(err);
     res.status(404).send();

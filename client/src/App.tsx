@@ -105,7 +105,7 @@ const App: React.FC = () => {
         .post<Book[]>("http://localhost:5309/books", {
           url: shelf?.url,
           numberOfBooksOnShelf: shelf?.numberOfBooks,
-          numberOfBooksRequested: numberOfBooks,
+          numberOfBooksRequested: parseInt(numberOfBooks, 10),
         })
         .then((res) => {
           setBooks(res.data);
