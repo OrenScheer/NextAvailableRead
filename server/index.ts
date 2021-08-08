@@ -73,35 +73,28 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
 });
 
 const isAvailable = async (book: Book): BluebirdPromise<[boolean, string]> => {
-  const url = `https://ottawa.bibliocommons.com/v2/search?query=${encodeURI(
-    `"${book.title}"+"${book.author}"`
-  )}&searchType=keyword`;
+  const url = `https://ottawa.bibliocommons.com/v2/search?query=(${encodeURI(
+    `title:(${book.title}) AND contributor:(${book.author})`
+  )})&searchType=bl&f_FORMAT=EBOOK`;
   let page;
   try {
     page = await axios.get(url);
   } catch {
     return [false, ""];
   }
-  // Lots to improve here: reorganize methods/order, use direct link to ebook
   const $ = cheerio.load(page.data);
-  const $elems = $(".cp-availability-status");
-  if ($elems.length === 0) {
-    return [false, ""];
+  const $available = $(".cp-search-result-item-content")
+    .first()
+    .find(".manifestation-item-format-call-wrap.available");
+  if ($available.length > 0) {
+    return [
+      true,
+      `https://ottawa.bibliocommons.com${
+        $available.find("a").attr("href") as string
+      }`,
+    ];
   }
-  const link = `https://ottawa.bibliocommons.com${
-    $(".cp-title").find("a").attr("href") as string
-  }`;
-  let found = false;
-  $(".format-info-main-content .cp-format-indicator").each((i, e) => {
-    const availability = $elems.eq(i).text();
-    if (
-      $(e).text().toLowerCase().includes("ebook") &&
-      availability.toLowerCase().includes("available")
-    ) {
-      found = true;
-    }
-  });
-  return [found, link];
+  return [false, ""];
 };
 
 interface BooksRequest {
@@ -115,7 +108,7 @@ app.post("/books", (req: Request, res: Response) => {
     const { url, numberOfBooksOnShelf, numberOfBooksRequested } =
       req.body as BooksRequest;
 
-    console.log(`number of books requested: ${numberOfBooksRequested}`);
+    console.log(`Request made for ${numberOfBooksRequested} books.`);
 
     const promises: PromiseLike<Book[]>[] = [];
     for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
@@ -126,12 +119,11 @@ app.post("/books", (req: Request, res: Response) => {
             const booksFromPage: Book[] = [];
             const $ = cheerio.load(page.data);
             $(".bookalike").each((_, e) => {
+              const $titleElem = $(e).find(".title").find(".value a");
+              const series = $titleElem.find("span").text();
+
               const book: Book = {
-                title: $(e)
-                  .find(".title")
-                  .find(".value a")
-                  .attr("title")
-                  ?.toString() as string,
+                title: $titleElem.text().replace(series, "").trim(),
                 author: $(e)
                   .find(".author")
                   .find("a")
@@ -177,7 +169,7 @@ app.post("/books", (req: Request, res: Response) => {
 
     const booksFromShelf = result.flat();
 
-    console.log("found books from Goodreads");
+    console.log("Goodreads books loaded.");
 
     // shuffle algorithm from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
     for (let i = booksFromShelf.length - 1; i > 0; i -= 1) {
@@ -222,6 +214,31 @@ app.post("/books", (req: Request, res: Response) => {
     res.status(200).send(availableBooks);
 
     bookPromises.forEach((promise) => promise.cancel());
+  })().catch((err) => {
+    console.log(err);
+    res.status(404).send();
+  });
+});
+
+interface BookAvailabilityRequest {
+  title: string;
+  author: string;
+}
+
+// Endpoint for testing availability function
+app.get("/availability", (req: Request, res: Response) => {
+  (async () => {
+    const { title, author } = req.body as BookAvailabilityRequest;
+    const book: Book = {
+      title,
+      author,
+      pageCount: 0,
+      rating: 0,
+      goodreadsUrl: "",
+      imageUrl: "",
+    };
+    const availability = await isAvailable(book);
+    res.status(200).send(availability);
   })().catch((err) => {
     console.log(err);
     res.status(404).send();
