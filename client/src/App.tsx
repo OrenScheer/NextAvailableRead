@@ -43,6 +43,14 @@ const createDummyBooksArray = (numberOfBooks: number): Book[] => {
   return books;
 };
 
+const createDummyLoadedArray = (numberOfBooks: number): boolean[] => {
+  const loaded: boolean[] = [];
+  for (let i = 0; i < numberOfBooks; i += 1) {
+    loaded.push(false);
+  }
+  return loaded;
+};
+
 const App: React.FC = () => {
   const { nextStep, prevStep, activeStep } = useSteps({
     initialStep: 0,
@@ -51,7 +59,7 @@ const App: React.FC = () => {
   const [shelf, setShelf] = useState<Shelf>();
   const [books, setBooks] = useState<Book[]>([]);
   const [isBookListVisible, setIsBookListVisible] = useState(false);
-  const [isBookListLoaded, setIsBookListLoaded] = useState(false);
+  const [areBooksLoaded, setAreBooksLoaded] = useState<boolean[]>([]);
   const [numberOfBooks, setNumberOfBooks] = useState("1");
   const bg = useColorModeValue("white", "gray.800");
   const [userID, setUserID] = useState("");
@@ -98,10 +106,11 @@ const App: React.FC = () => {
 
   const advance = () => {
     nextStep();
-    if (activeStep === 2) {
+    if (activeStep === 2 && shelf) {
       setBooks(createDummyBooksArray(parseInt(numberOfBooks, 10)));
+      setAreBooksLoaded(createDummyLoadedArray(parseInt(numberOfBooks, 10)));
       setIsBookListVisible(true);
-      axios
+      /* axios
         .post<Book[]>("http://localhost:5309/books", {
           url: shelf?.url,
           numberOfBooksOnShelf: shelf?.numberOfBooks,
@@ -111,7 +120,47 @@ const App: React.FC = () => {
           setBooks(res.data);
           setIsBookListLoaded(true);
         })
-        .catch((err) => console.log(err));
+        .catch((err) => console.log(err)); */
+      const events = new EventSource(
+        `http://localhost:5309/books?url=${encodeURI(
+          shelf.url
+        )}&numberOfBooksOnShelf=${encodeURI(
+          shelf.numberOfBooks.toString()
+        )}&numberOfBooksRequested=${encodeURI(numberOfBooks)}`
+      );
+      let numberOfBooksReceived = 0;
+      events.onmessage = (event: MessageEvent<string>) => {
+        let data: string;
+        if (event instanceof MessageEvent) {
+          data = event.data as string;
+        } else {
+          return;
+        }
+        if (data.toLowerCase().includes("goodreads found")) {
+          console.log("Shelves scanned.");
+        } else if (data.toLowerCase().includes("done here")) {
+          events.close();
+        } else {
+          const newBook: Book = JSON.parse(data) as Book;
+          setBooks((oldBooks) =>
+            oldBooks.map((book, index) => {
+              if (index === numberOfBooksReceived) {
+                return newBook;
+              }
+              return book;
+            })
+          );
+          setAreBooksLoaded((oldAreBooksLoaded) =>
+            oldAreBooksLoaded.map((loaded, index) => {
+              if (index === numberOfBooksReceived) {
+                return true;
+              }
+              return loaded;
+            })
+          );
+          numberOfBooksReceived += 1;
+        }
+      };
     }
   };
 
@@ -149,48 +198,57 @@ const App: React.FC = () => {
         justifyContent="space-between"
         alignItems="flex-start"
       >
-        <Steps
-          activeStep={activeStep}
-          mb={8}
-          orientation="vertical"
-          pos="sticky"
-          top="100px"
-        >
-          {steps.map(({ label, content: stepContent }) => (
-            <Step label={label} key={label}>
-              <Flex minH="100px">
-                <>
-                  <Flex direction="column">
-                    {stepContent}
-                    <Flex mt={4}>
-                      <Button
-                        onClick={prevStep}
-                        mr={4}
-                        isDisabled={activeStep <= 0}
-                        colorScheme="teal"
-                        variant="outline"
-                      >
-                        Previous step
-                      </Button>
-                      <Button
-                        onClick={advance}
-                        isDisabled={activeStep >= 3}
-                        colorScheme="teal"
-                        variant="solid"
-                      >
-                        Next step
-                      </Button>
+        <Flex direction="column" pos="sticky" top="100px">
+          <Steps activeStep={activeStep} mb={4} orientation="vertical">
+            {steps.map(({ label, content: stepContent }) => (
+              <Step label={label} key={label}>
+                <Flex minH="100px">
+                  <>
+                    <Flex direction="column">
+                      {stepContent}
+                      <Flex mt={4}>
+                        <Button
+                          onClick={prevStep}
+                          mr={4}
+                          isDisabled={activeStep <= 0}
+                          colorScheme="teal"
+                          variant="outline"
+                        >
+                          Previous step
+                        </Button>
+                        <Button
+                          onClick={advance}
+                          isDisabled={activeStep >= 3}
+                          colorScheme="teal"
+                          variant="solid"
+                        >
+                          Next step
+                        </Button>
+                      </Flex>
                     </Flex>
-                  </Flex>
-                </>
-              </Flex>
-            </Step>
-          ))}
-        </Steps>
+                  </>
+                </Flex>
+              </Step>
+            ))}
+          </Steps>
+          {activeStep === 3 && (
+            <Flex>
+              <Button
+                onClick={prevStep}
+                mr={4}
+                isDisabled={activeStep <= 0}
+                colorScheme="teal"
+                variant="outline"
+              >
+                Previous step
+              </Button>
+            </Flex>
+          )}
+        </Flex>
         <BookList
           books={books}
           isVisible={isBookListVisible}
-          isLoaded={isBookListLoaded}
+          isLoaded={areBooksLoaded}
         />
       </Flex>
     </Box>

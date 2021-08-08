@@ -112,7 +112,7 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
 type BookListProps = {
   books: Book[];
   isVisible: boolean;
-  isLoaded: boolean;
+  isLoaded: boolean[];
 };
 
 const BookList = ({
@@ -122,11 +122,13 @@ const BookList = ({
 }: BookListProps): ReactElement => (
   <>
     {isVisible && (
-      <SimpleGrid columns={2} spacing={4} width="70%">
-        {books.map((book) => (
-          <BookCard book={book} isLoaded={isLoaded} />
-        ))}
-      </SimpleGrid>
+      <Flex direction="column" width="70%">
+        <SimpleGrid columns={2} spacing={4}>
+          {books.map((book, index) => (
+            <BookCard book={book} isLoaded={isLoaded[index]} />
+          ))}
+        </SimpleGrid>
+      </Flex>
     )}
   </>
 );

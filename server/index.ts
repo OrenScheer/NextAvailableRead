@@ -103,12 +103,26 @@ interface BooksRequest {
   numberOfBooksRequested: number;
 }
 
-app.post("/books", (req: Request, res: Response) => {
+app.get("/books", (req: Request, res: Response) => {
   (async () => {
-    const { url, numberOfBooksOnShelf, numberOfBooksRequested } =
-      req.body as BooksRequest;
+    const url = req.query.url as string;
+    const numberOfBooksOnShelf = parseInt(
+      req.query.numberOfBooksOnShelf as string,
+      10
+    );
+    const numberOfBooksRequested = parseInt(
+      req.query.numberOfBooksRequested as string,
+      10
+    );
 
     console.log(`Request made for ${numberOfBooksRequested} books.`);
+
+    const headers = {
+      "Content-Type": "text/event-stream",
+      Connection: "keep-alive",
+      "Cache-Control": "no-cache",
+    };
+    res.writeHead(200, headers);
 
     const promises: PromiseLike<Book[]>[] = [];
     for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
@@ -170,6 +184,7 @@ app.post("/books", (req: Request, res: Response) => {
     const booksFromShelf = result.flat();
 
     console.log("Goodreads books loaded.");
+    res.write("data: Goodreads found.\n\n");
 
     // shuffle algorithm from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
     for (let i = booksFromShelf.length - 1; i > 0; i -= 1) {
@@ -189,6 +204,7 @@ app.post("/books", (req: Request, res: Response) => {
               console.log(link);
               // eslint-disable-next-line no-param-reassign
               arr[i].libraryUrl = link;
+              res.write(`data: ${JSON.stringify(book)}\n\n`);
               return book;
             }
             throw new Error("Book is not available.");
@@ -211,7 +227,9 @@ app.post("/books", (req: Request, res: Response) => {
     if (availableBooks.length === 0) {
       throw new Error("You have no books!");
     }
-    res.status(200).send(availableBooks);
+    res.write(`data: done here\n\n`);
+    res.status(200).send();
+    res.end();
 
     bookPromises.forEach((promise) => promise.cancel());
   })().catch((err) => {
