@@ -76,7 +76,7 @@ const isAvailable = async (
   book: Book,
   biblioCommonsPrefix: string
 ): BluebirdPromise<[boolean, string]> => {
-  const url = `https://${biblioCommonsPrefix}.biblioCommons.com/v2/search?query=(${encodeURI(
+  const url = `https://${biblioCommonsPrefix}.bibliocommons.com/v2/search?query=(${encodeURI(
     `title:(${book.title}) AND contributor:(${book.author})`
   )})&searchType=bl&f_FORMAT=EBOOK`;
   let page;
@@ -92,7 +92,7 @@ const isAvailable = async (
   if ($available.length > 0) {
     return [
       true,
-      `https://${biblioCommonsPrefix}.biblioCommons.com${
+      `https://${biblioCommonsPrefix}.bibliocommons.com${
         $available.find("a").attr("href") as string
       }`,
     ];
@@ -127,7 +127,7 @@ app.get("/books", (req: Request, res: Response) => {
     const headers = {
       "Content-Type": "text/event-stream",
       Connection: "keep-alive",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-transform",
     };
     res.writeHead(200, headers);
 

@@ -28,7 +28,7 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5309/users/${userID}/shelves`)
+      .get(`/users/${userID}/shelves`)
       .then((res: AxiosResponse<Shelf[]>) => {
         setShelves(res.data);
       })

@@ -65,13 +65,14 @@ const App: React.FC = () => {
   const [numberOfBooks, setNumberOfBooks] = useState("1");
   const bg = useColorModeValue("white", "gray.800");
   const [userID, setUserID] = useState("");
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) =>
-    setUserID(event.target.value);
+  const handleChange = (valueAsString: string) => setUserID(valueAsString);
 
   const stepOne = (
     <FormControl id="userID">
       <FormLabel>Goodreads user ID</FormLabel>
-      <Input onChange={handleChange} value={userID} />
+      <NumberInput onChange={handleChange} value={userID}>
+        <NumberInputField />
+      </NumberInput>
       <FormHelperText>
         Your Goodreads profile must be set to public.
       </FormHelperText>
@@ -136,9 +137,7 @@ const App: React.FC = () => {
         })
         .catch((err) => console.log(err)); */
       const events = new EventSource(
-        `http://localhost:5309/books?url=${encodeURI(
-          shelf.url
-        )}&numberOfBooksOnShelf=${encodeURI(
+        `/books?url=${encodeURI(shelf.url)}&numberOfBooksOnShelf=${encodeURI(
           shelf.numberOfBooks.toString()
         )}&numberOfBooksRequested=${encodeURI(numberOfBooks)}
         &biblioCommonsPrefix=${libraryPrefix}`
@@ -183,37 +182,37 @@ const App: React.FC = () => {
     <Box
       textAlign="center"
       fontSize="xl"
-      px={8}
       pb={8}
       d="flex"
       flexDir="column"
       alignItems="center"
       bg={bg}
     >
-      <Flex
-        width="100%"
-        justifyContent="space-between"
-        pt={6}
-        pb={6}
-        pos="sticky"
-        top="0"
-        bg={bg}
-        zIndex="9"
-        height="100px"
-      >
-        <Heading d="flex" alignItems="center" color="#38B2AC">
-          <FaBook style={{ marginRight: "10px" }} />
-          NextAvailableRead
-        </Heading>
-        <ColorModeSwitcher />
+      <Flex bg={bg} width="100%" zIndex="9" pos="sticky" top="0">
+        <Flex
+          width="100%"
+          justifyContent="space-between"
+          pt={6}
+          pb={6}
+          px={8}
+          height="100px"
+          alignItems="flex-end"
+        >
+          <Heading d="flex" alignItems="center" color="#38B2AC">
+            <FaBook style={{ marginRight: "10px" }} />
+            NextAvailableRead
+          </Heading>
+          <ColorModeSwitcher zIndex="9" />
+        </Flex>
       </Flex>
       <Flex
-        direction="row"
         width="100%"
+        px={8}
         justifyContent="space-between"
         alignItems="flex-start"
+        direction={{ base: "column", md: "row" }}
       >
-        <Flex direction="column" pos="sticky" top="100px">
+        <Flex direction="column" pos={{ md: "sticky" }} top="100px" mb={3}>
           <Steps activeStep={activeStep} mb={4} orientation="vertical">
             {steps.map(({ label, content: stepContent }) => (
               <Step label={label} key={label}>

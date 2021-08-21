@@ -30,7 +30,8 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
     shadow="sm"
     borderWidth="1px"
     width="100%"
-    height="225px"
+    minWidth="350px"
+    height={{ base: "100%", md: "225px" }}
   >
     <Flex height="100%" justifyContent="space-between">
       <Skeleton isLoaded={isLoaded} maxW="120px" width="120px">
@@ -88,10 +89,22 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
             </SkeletonText>
           </Flex>
         </Flex>
-        <Flex direction="row" alignItems="flex-start" width="75%">
-          <Skeleton isLoaded={isLoaded} me={4} width="130px" height="40px">
+        <Flex
+          alignItems="flex-start"
+          width="75%"
+          flexWrap={{ base: "wrap", "2xl": "nowrap" }}
+          direction="row"
+          mt={2}
+        >
+          <Skeleton
+            isLoaded={isLoaded}
+            me={4}
+            width="130px"
+            height="40px"
+            mb={{ base: "2" }}
+          >
             <Link href={book.goodreadsUrl} isExternal>
-              <Button leftIcon={<FaGoodreads />} width="130px" me={4}>
+              <Button leftIcon={<FaGoodreads />} width="130px">
                 Goodreads
               </Button>
             </Link>
@@ -123,7 +136,7 @@ const BookList = ({
   <>
     {isVisible && (
       <Flex direction="column" width="70%">
-        <SimpleGrid columns={2} spacing={4}>
+        <SimpleGrid columns={[1, 1, 1, 1, 2]} spacing={4}>
           {books.map((book, index) => (
             <BookCard book={book} isLoaded={isLoaded[index]} />
           ))}
