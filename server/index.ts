@@ -72,8 +72,11 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
   });
 });
 
-const isAvailable = async (book: Book): BluebirdPromise<[boolean, string]> => {
-  const url = `https://ottawa.bibliocommons.com/v2/search?query=(${encodeURI(
+const isAvailable = async (
+  book: Book,
+  biblioCommonsPrefix: string
+): BluebirdPromise<[boolean, string]> => {
+  const url = `https://${biblioCommonsPrefix}.biblioCommons.com/v2/search?query=(${encodeURI(
     `title:(${book.title}) AND contributor:(${book.author})`
   )})&searchType=bl&f_FORMAT=EBOOK`;
   let page;
@@ -89,7 +92,7 @@ const isAvailable = async (book: Book): BluebirdPromise<[boolean, string]> => {
   if ($available.length > 0) {
     return [
       true,
-      `https://ottawa.bibliocommons.com${
+      `https://${biblioCommonsPrefix}.biblioCommons.com${
         $available.find("a").attr("href") as string
       }`,
     ];
@@ -101,6 +104,7 @@ interface BooksRequest {
   url: string;
   numberOfBooksOnShelf: number;
   numberOfBooksRequested: number;
+  biblioCommonsPrefix: string;
 }
 
 app.get("/books", (req: Request, res: Response) => {
@@ -114,8 +118,11 @@ app.get("/books", (req: Request, res: Response) => {
       req.query.numberOfBooksRequested as string,
       10
     );
+    const biblioCommonsPrefix = req.query.biblioCommonsPrefix as string;
 
-    console.log(`Request made for ${numberOfBooksRequested} books.`);
+    console.log(
+      `Request made for ${numberOfBooksRequested} books from ${biblioCommonsPrefix}.`
+    );
 
     const headers = {
       "Content-Type": "text/event-stream",
@@ -198,7 +205,7 @@ app.get("/books", (req: Request, res: Response) => {
     const bookPromises: BluebirdPromise<Book>[] = [];
     booksFromShelf.forEach((book, i, arr) => {
       bookPromises.push(
-        isAvailable(book)
+        isAvailable(book, biblioCommonsPrefix)
           .then(([isIt, link]) => {
             if (isIt) {
               console.log(link);
@@ -241,12 +248,14 @@ app.get("/books", (req: Request, res: Response) => {
 interface BookAvailabilityRequest {
   title: string;
   author: string;
+  biblioCommonsPrefix: string;
 }
 
 // Endpoint for testing availability function
 app.get("/availability", (req: Request, res: Response) => {
   (async () => {
-    const { title, author } = req.body as BookAvailabilityRequest;
+    const { title, author, biblioCommonsPrefix } =
+      req.body as BookAvailabilityRequest;
     const book: Book = {
       title,
       author,
@@ -255,7 +264,7 @@ app.get("/availability", (req: Request, res: Response) => {
       goodreadsUrl: "",
       imageUrl: "",
     };
-    const availability = await isAvailable(book);
+    const availability = await isAvailable(book, biblioCommonsPrefix);
     res.status(200).send(availability);
   })().catch((err) => {
     console.log(err);

@@ -13,7 +13,7 @@ import {
   SkeletonCircle,
 } from "@chakra-ui/react";
 import { FaBookOpen, FaGoodreads, FaStar, VscLibrary } from "react-icons/all";
-import { ReactElement, useState } from "react";
+import { ReactElement } from "react";
 import { Book } from "../types";
 import BookFallback from "../images/BookFallback.png";
 

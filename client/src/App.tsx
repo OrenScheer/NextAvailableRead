@@ -14,16 +14,17 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   useColorModeValue,
+  Select,
 } from "@chakra-ui/react";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { ChangeEvent, useState } from "react";
 import { FaBook } from "react-icons/fa";
-import axios from "axios";
 import { Book, Shelf } from "./types";
 
-import ColorModeSwitcher from "./ColorModeSwitcher";
+import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import ShelfSelector from "./components/ShelfSelector";
 import BookList from "./components/BookList";
+import libraries from "./libraries";
 
 const dummyBook: Book = {
   title: "",
@@ -58,6 +59,7 @@ const App: React.FC = () => {
 
   const [shelf, setShelf] = useState<Shelf>();
   const [books, setBooks] = useState<Book[]>([]);
+  const [libraryPrefix, setLibraryPrefix] = useState("");
   const [isBookListVisible, setIsBookListVisible] = useState(false);
   const [areBooksLoaded, setAreBooksLoaded] = useState<boolean[]>([]);
   const [numberOfBooks, setNumberOfBooks] = useState("1");
@@ -77,6 +79,17 @@ const App: React.FC = () => {
   );
 
   const stepThree = (
+    <Select
+      value={libraryPrefix}
+      onChange={(value) => setLibraryPrefix(value.target.value)}
+    >
+      {libraries.map((library: string[]) => (
+        <option value={library[1]}>{library[0]}</option>
+      ))}
+    </Select>
+  );
+
+  const stepFour = (
     <FormControl id="numberOfBooks">
       <FormLabel>Number of books</FormLabel>
       <NumberInput
@@ -101,12 +114,13 @@ const App: React.FC = () => {
       label: "Select a shelf",
       content: <ShelfSelector userID={userID} setShelf={setShelf} />,
     },
-    { label: "Select the number of books", content: stepThree },
+    { label: "Select a library", content: stepThree },
+    { label: "Select the number of books", content: stepFour },
   ];
 
   const advance = () => {
     nextStep();
-    if (activeStep === 2 && shelf) {
+    if (activeStep === steps.length - 1 && shelf) {
       setBooks(createDummyBooksArray(parseInt(numberOfBooks, 10)));
       setAreBooksLoaded(createDummyLoadedArray(parseInt(numberOfBooks, 10)));
       setIsBookListVisible(true);
@@ -126,7 +140,8 @@ const App: React.FC = () => {
           shelf.url
         )}&numberOfBooksOnShelf=${encodeURI(
           shelf.numberOfBooks.toString()
-        )}&numberOfBooksRequested=${encodeURI(numberOfBooks)}`
+        )}&numberOfBooksRequested=${encodeURI(numberOfBooks)}
+        &biblioCommonsPrefix=${libraryPrefix}`
       );
       let numberOfBooksReceived = 0;
       events.onmessage = (event: MessageEvent<string>) => {
@@ -218,7 +233,7 @@ const App: React.FC = () => {
                         </Button>
                         <Button
                           onClick={advance}
-                          isDisabled={activeStep >= 3}
+                          isDisabled={activeStep >= steps.length}
                           colorScheme="teal"
                           variant="solid"
                         >
@@ -231,7 +246,7 @@ const App: React.FC = () => {
               </Step>
             ))}
           </Steps>
-          {activeStep === 3 && (
+          {activeStep === steps.length && (
             <Flex>
               <Button
                 onClick={prevStep}
