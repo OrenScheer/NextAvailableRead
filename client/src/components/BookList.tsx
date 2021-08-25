@@ -141,7 +141,7 @@ const BookList = ({
 }: BookListProps): ReactElement => {
   const notEnoughBooksAvailable = isDoneFinding && isLoaded.includes(false);
   const noBooksAvailable = isDoneFinding && !isLoaded.includes(true);
-  const lastFoundBookIndex = isLoaded.indexOf(true);
+  const firstNotFoundBookIndex = isLoaded.indexOf(false);
 
   let gridContents;
 
@@ -149,7 +149,7 @@ const BookList = ({
     if (notEnoughBooksAvailable) {
       gridContents = (
         <>
-          {books.slice(0, lastFoundBookIndex + 1).map((book, index) => (
+          {books.slice(0, firstNotFoundBookIndex).map((book, index) => (
             <BookCard book={book} isLoaded={isLoaded[index]} />
           ))}
           <Box
@@ -171,8 +171,8 @@ const BookList = ({
               <AlertTitle mt={4} mb={1} fontSize="xl">
                 You have no more available books.
               </AlertTitle>
-              <AlertDescription maxWidth="md" fontSize="lg">
-                Try adding more books to your Goodreads shelf.
+              <AlertDescription fontSize="lg">
+                Please try adding more books to your Goodreads shelf.
               </AlertDescription>
             </Alert>
           </Box>
@@ -208,8 +208,9 @@ const BookList = ({
               <AlertTitle mt={4} mb={1} fontSize="2xl">
                 There was an error.
               </AlertTitle>
-              <AlertDescription maxWidth="lg" fontSize="xl">
-                It&apos;s possible that you have no books available.
+              <AlertDescription fontSize="xl">
+                Please try again, or try adding more books to your Goodreads
+                shelf.
               </AlertDescription>
             </Alert>
           </Box>

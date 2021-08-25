@@ -85,7 +85,7 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
           <AlertTitle mt={4} mb={1} fontSize="lg">
             We could not retrieve your shelves.
           </AlertTitle>
-          <AlertDescription maxWidth="sm" fontSize="md">
+          <AlertDescription fontSize="md">
             Please go back and try again.
           </AlertDescription>
         </Alert>

@@ -155,7 +155,11 @@ app.get("/books", (req: Request, res: Response) => {
                   .join(" ")
                   .trim(),
                 pageCount: parseInt(
-                  $(e).find(".num_pages").find(".value").text(),
+                  $(e)
+                    .find(".num_pages")
+                    .find(".value")
+                    .text()
+                    .replace(",", ""),
                   10
                 ),
                 rating: parseFloat(
