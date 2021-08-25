@@ -225,7 +225,8 @@ app.get("/books", (req: Request, res: Response) => {
     const availableBooks = await BluebirdPromise.some(
       bookPromises,
       numberOfBooksRequested
-    ).catch((err) => {
+    ).catch(async (err) => {
+      await Promise.allSettled(bookPromises);
       throw err;
     });
 
@@ -241,6 +242,7 @@ app.get("/books", (req: Request, res: Response) => {
     bookPromises.forEach((promise) => promise.cancel());
   })().catch((err) => {
     console.log(err);
+    res.write(`data: error\n\n`);
     res.status(404).send();
   });
 });

@@ -11,6 +11,10 @@ import {
   Skeleton,
   SkeletonText,
   SkeletonCircle,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Alert,
 } from "@chakra-ui/react";
 import { FaBookOpen, FaGoodreads, FaStar, VscLibrary } from "react-icons/all";
 import { ReactElement } from "react";
@@ -126,24 +130,97 @@ type BookListProps = {
   books: Book[];
   isVisible: boolean;
   isLoaded: boolean[];
+  isDoneFinding: boolean;
 };
 
 const BookList = ({
   books,
   isVisible,
   isLoaded,
-}: BookListProps): ReactElement => (
-  <>
-    {isVisible && (
-      <Flex direction="column" width="70%">
-        <SimpleGrid columns={[1, 1, 1, 1, 2]} spacing={4}>
-          {books.map((book, index) => (
+  isDoneFinding,
+}: BookListProps): ReactElement => {
+  const notEnoughBooksAvailable = isDoneFinding && isLoaded.includes(false);
+  const noBooksAvailable = isDoneFinding && !isLoaded.includes(true);
+  const lastFoundBookIndex = isLoaded.indexOf(true);
+
+  let gridContents;
+
+  if (isVisible) {
+    if (notEnoughBooksAvailable) {
+      gridContents = (
+        <>
+          {books.slice(0, lastFoundBookIndex + 1).map((book, index) => (
             <BookCard book={book} isLoaded={isLoaded[index]} />
           ))}
-        </SimpleGrid>
+          <Box
+            shadow="sm"
+            borderWidth="1px"
+            width="100%"
+            minWidth="350px"
+            height={{ base: "100%", md: "225px" }}
+          >
+            <Alert
+              status="error"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              textAlign="center"
+              height="100%"
+            >
+              <AlertIcon boxSize="40px" mr={0} />
+              <AlertTitle mt={4} mb={1} fontSize="xl">
+                You have no more available books.
+              </AlertTitle>
+              <AlertDescription maxWidth="md" fontSize="lg">
+                Try adding more books to your Goodreads shelf.
+              </AlertDescription>
+            </Alert>
+          </Box>
+        </>
+      );
+    } else if (!noBooksAvailable) {
+      gridContents = books.map((book, index) => (
+        <BookCard book={book} isLoaded={isLoaded[index]} />
+      ));
+    }
+  }
+
+  return (
+    <>
+      <Flex direction="column" width={{ base: "100%", md: "70%" }}>
+        {noBooksAvailable ? (
+          <Box
+            shadow="sm"
+            borderWidth="1px"
+            width="100%"
+            height={{ base: "100%", md: "225px" }}
+          >
+            <Alert
+              status="error"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              textAlign="center"
+              width="100%"
+              height="100%"
+            >
+              <AlertIcon boxSize="40px" mr={0} />
+              <AlertTitle mt={4} mb={1} fontSize="2xl">
+                There was an error.
+              </AlertTitle>
+              <AlertDescription maxWidth="lg" fontSize="xl">
+                It&apos;s possible that you have no books available.
+              </AlertDescription>
+            </Alert>
+          </Box>
+        ) : (
+          <SimpleGrid columns={[1, 1, 1, 1, 2]} spacing={4}>
+            {gridContents}
+          </SimpleGrid>
+        )}
       </Flex>
-    )}
-  </>
-);
+    </>
+  );
+};
 
 export default BookList;

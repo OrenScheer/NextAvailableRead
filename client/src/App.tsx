@@ -4,7 +4,6 @@ import {
   Heading,
   Flex,
   Button,
-  Input,
   FormControl,
   FormLabel,
   FormHelperText,
@@ -17,7 +16,7 @@ import {
   Select,
 } from "@chakra-ui/react";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import { FaBook } from "react-icons/fa";
 import { Book, Shelf } from "./types";
 
@@ -63,6 +62,7 @@ const App: React.FC = () => {
   const [isBookListVisible, setIsBookListVisible] = useState(false);
   const [areBooksLoaded, setAreBooksLoaded] = useState<boolean[]>([]);
   const [numberOfBooks, setNumberOfBooks] = useState("1");
+  const [isDoneFinding, setIsDoneFinding] = useState(false);
   const bg = useColorModeValue("white", "gray.800");
   const [userID, setUserID] = useState("");
   const handleChange = (valueAsString: string) => setUserID(valueAsString);
@@ -125,17 +125,8 @@ const App: React.FC = () => {
       setBooks(createDummyBooksArray(parseInt(numberOfBooks, 10)));
       setAreBooksLoaded(createDummyLoadedArray(parseInt(numberOfBooks, 10)));
       setIsBookListVisible(true);
-      /* axios
-        .post<Book[]>("http://localhost:5309/books", {
-          url: shelf?.url,
-          numberOfBooksOnShelf: shelf?.numberOfBooks,
-          numberOfBooksRequested: parseInt(numberOfBooks, 10),
-        })
-        .then((res) => {
-          setBooks(res.data);
-          setIsBookListLoaded(true);
-        })
-        .catch((err) => console.log(err)); */
+      setIsDoneFinding(false);
+      console.log("making request");
       const events = new EventSource(
         `/books?url=${encodeURI(shelf.url)}&numberOfBooksOnShelf=${encodeURI(
           shelf.numberOfBooks.toString()
@@ -143,7 +134,7 @@ const App: React.FC = () => {
         &biblioCommonsPrefix=${libraryPrefix}`
       );
       let numberOfBooksReceived = 0;
-      events.onmessage = (event: MessageEvent<string>) => {
+      events.onmessage = (event: MessageEvent) => {
         let data: string;
         if (event instanceof MessageEvent) {
           data = event.data as string;
@@ -154,6 +145,10 @@ const App: React.FC = () => {
           console.log("Shelves scanned.");
         } else if (data.toLowerCase().includes("done here")) {
           events.close();
+          setIsDoneFinding(true);
+        } else if (data.toLowerCase().includes("error")) {
+          events.close();
+          setIsDoneFinding(true);
         } else {
           const newBook: Book = JSON.parse(data) as Book;
           setBooks((oldBooks) =>
@@ -172,6 +167,7 @@ const App: React.FC = () => {
               return loaded;
             })
           );
+          console.log("received");
           numberOfBooksReceived += 1;
         }
       };
@@ -263,6 +259,7 @@ const App: React.FC = () => {
           books={books}
           isVisible={isBookListVisible}
           isLoaded={areBooksLoaded}
+          isDoneFinding={isDoneFinding}
         />
       </Flex>
     </Box>

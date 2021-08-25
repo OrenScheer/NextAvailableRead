@@ -79,13 +79,13 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
           justifyContent="center"
           textAlign="center"
           height="200px"
-          width="300px"
+          width="100%"
         >
           <AlertIcon boxSize="40px" mr={0} />
           <AlertTitle mt={4} mb={1} fontSize="lg">
             We could not retrieve your shelves.
           </AlertTitle>
-          <AlertDescription maxWidth="sm">
+          <AlertDescription maxWidth="sm" fontSize="md">
             Please go back and try again.
           </AlertDescription>
         </Alert>
