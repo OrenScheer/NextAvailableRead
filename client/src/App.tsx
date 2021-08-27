@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import {
   Box,
   Heading,
@@ -13,10 +14,10 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   useColorModeValue,
-  Select,
 } from "@chakra-ui/react";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { useState } from "react";
+
 import { FaBook } from "react-icons/fa";
 import { Book, Shelf } from "./types";
 
@@ -24,6 +25,7 @@ import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import ShelfSelector from "./components/ShelfSelector";
 import BookList from "./components/BookList";
 import libraries from "./libraries";
+import CustomSelect from "./components/Select";
 
 const dummyBook: Book = {
   title: "",
@@ -59,6 +61,10 @@ const App: React.FC = () => {
   const [shelf, setShelf] = useState<Shelf>();
   const [books, setBooks] = useState<Book[]>([]);
   const [libraryPrefix, setLibraryPrefix] = useState("");
+  const [selectValue, setSelectValue] = useState<{
+    label: string;
+    value: string;
+  }>({ label: "", value: "" });
   const [isBookListVisible, setIsBookListVisible] = useState(false);
   const [areBooksLoaded, setAreBooksLoaded] = useState<boolean[]>([]);
   const [numberOfBooks, setNumberOfBooks] = useState("1");
@@ -73,26 +79,27 @@ const App: React.FC = () => {
       <NumberInput onChange={handleChange} value={userID}>
         <NumberInputField />
       </NumberInput>
-      <FormHelperText>
-        Your Goodreads profile must be set to public.
-      </FormHelperText>
+      <FormHelperText>Your Goodreads profile must be public.</FormHelperText>
     </FormControl>
   );
 
   const stepThree = (
-    <Select
-      value={libraryPrefix}
-      onChange={(value) => setLibraryPrefix(value.target.value)}
-    >
-      {libraries.map((library: string[]) => (
-        <option value={library[1]}>{library[0]}</option>
-      ))}
-    </Select>
+    <Box width="300px" textAlign="left">
+      <CustomSelect
+        options={libraries}
+        width="300px"
+        value={selectValue}
+        onChange={(newValue: { label: string; value: string }) => {
+          setSelectValue(newValue);
+          setLibraryPrefix(newValue.value);
+        }}
+        placeholder="Select or type a library"
+      />
+    </Box>
   );
 
   const stepFour = (
     <FormControl id="numberOfBooks">
-      <FormLabel>Number of books</FormLabel>
       <NumberInput
         defaultValue={1}
         min={1}
@@ -214,7 +221,7 @@ const App: React.FC = () => {
               <Step label={label} key={label}>
                 <Flex minH="100px">
                   <>
-                    <Flex direction="column">
+                    <Flex direction="column" maxW="300px">
                       {stepContent}
                       <Flex mt={4}>
                         <Button
