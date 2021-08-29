@@ -69,6 +69,7 @@ const App: React.FC = () => {
   const [areBooksLoaded, setAreBooksLoaded] = useState<boolean[]>([]);
   const [numberOfBooks, setNumberOfBooks] = useState("1");
   const [isDoneFinding, setIsDoneFinding] = useState(false);
+  const [isError, setIsError] = useState(false);
   const bg = useColorModeValue("white", "gray.800");
   const [userID, setUserID] = useState("");
   const handleChange = (valueAsString: string) => setUserID(valueAsString);
@@ -133,7 +134,7 @@ const App: React.FC = () => {
       setAreBooksLoaded(createDummyLoadedArray(parseInt(numberOfBooks, 10)));
       setIsBookListVisible(true);
       setIsDoneFinding(false);
-      console.log("making request");
+      setIsError(false);
       const events = new EventSource(
         `/books?url=${encodeURI(shelf.url)}&numberOfBooksOnShelf=${encodeURI(
           shelf.numberOfBooks.toString()
@@ -155,6 +156,7 @@ const App: React.FC = () => {
           setIsDoneFinding(true);
         } else if (data.toLowerCase().includes("error")) {
           events.close();
+          setIsError(true);
           setIsDoneFinding(true);
         } else {
           const newBook: Book = JSON.parse(data) as Book;
@@ -267,6 +269,7 @@ const App: React.FC = () => {
           isVisible={isBookListVisible}
           isLoaded={areBooksLoaded}
           isDoneFinding={isDoneFinding}
+          isError={isError}
         />
       </Flex>
     </Box>

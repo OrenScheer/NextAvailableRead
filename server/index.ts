@@ -226,28 +226,23 @@ app.get("/books", (req: Request, res: Response) => {
       );
     });
 
-    const availableBooks = await BluebirdPromise.some(
-      bookPromises,
-      numberOfBooksRequested
-    ).catch(async (err) => {
-      await Promise.allSettled(bookPromises);
-      throw err;
-    });
-
-    console.log(availableBooks.length);
-
-    if (availableBooks.length === 0) {
-      throw new Error("You have no books!");
-    }
-    res.write(`data: done here\n\n`);
-    res.status(200).send();
-    res.end();
+    await BluebirdPromise.some(bookPromises, numberOfBooksRequested)
+      .catch(async () => {
+        await Promise.allSettled(bookPromises);
+        console.log("Not enough found.");
+      })
+      .finally(() => {
+        res.write(`data: done here\n\n`);
+        res.status(200).send();
+        res.end();
+      });
 
     bookPromises.forEach((promise) => promise.cancel());
-  })().catch((err) => {
+  })().catch((err: Error) => {
     console.log(err);
     res.write(`data: error\n\n`);
     res.status(404).send();
+    res.end();
   });
 });
 

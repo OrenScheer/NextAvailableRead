@@ -131,6 +131,7 @@ type BookListProps = {
   isVisible: boolean;
   isLoaded: boolean[];
   isDoneFinding: boolean;
+  isError: boolean;
 };
 
 const BookList = ({
@@ -138,9 +139,10 @@ const BookList = ({
   isVisible,
   isLoaded,
   isDoneFinding,
+  isError,
 }: BookListProps): ReactElement => {
   const notEnoughBooksAvailable = isDoneFinding && isLoaded.includes(false);
-  const noBooksAvailable = isDoneFinding && !isLoaded.includes(true);
+  const otherError = isError && !isLoaded.includes(true);
   const firstNotFoundBookIndex = isLoaded.indexOf(false);
 
   let gridContents;
@@ -178,7 +180,7 @@ const BookList = ({
           </Box>
         </>
       );
-    } else if (!noBooksAvailable) {
+    } else if (!otherError) {
       gridContents = books.map((book, index) => (
         <BookCard book={book} isLoaded={isLoaded[index]} />
       ));
@@ -188,7 +190,7 @@ const BookList = ({
   return (
     <>
       <Flex direction="column" width={{ base: "100%", md: "70%" }}>
-        {noBooksAvailable ? (
+        {otherError ? (
           <Box
             shadow="sm"
             borderWidth="1px"
