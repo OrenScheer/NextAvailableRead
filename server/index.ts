@@ -165,7 +165,7 @@ app.get("/books", (req: Request, res: Response) => {
                 rating: parseFloat(
                   $(e).find(".avg_rating").find("div").text().toString()
                 ),
-                goodreadsUrl: `https://goodreads.com/${
+                goodreadsUrl: `https://goodreads.com${
                   $(e).find("a").attr("href") as string
                 }`,
                 imageUrl: $(e)
