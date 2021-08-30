@@ -238,7 +238,7 @@ app.get("/books", (req: Request, res: Response) => {
       });
 
     bookPromises.forEach((promise) => promise.cancel());
-  })().catch((err: Error) => {
+  })().catch((err) => {
     console.log(err);
     res.write(`data: error\n\n`);
     res.status(404).send();

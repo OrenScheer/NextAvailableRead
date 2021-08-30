@@ -211,8 +211,7 @@ const BookList = ({
                 There was an error.
               </AlertTitle>
               <AlertDescription fontSize="xl">
-                Please try again, or try adding more books to your Goodreads
-                shelf.
+                Please try again.
               </AlertDescription>
             </Alert>
           </Box>

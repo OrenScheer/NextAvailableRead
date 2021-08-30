@@ -14,11 +14,15 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   useColorModeValue,
+  Tooltip,
+  Code,
+  Text,
 } from "@chakra-ui/react";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { useState } from "react";
 
 import { FaBook } from "react-icons/fa";
+import { QuestionOutlineIcon } from "@chakra-ui/icons";
 import { Book, Shelf } from "./types";
 
 import ColorModeSwitcher from "./components/ColorModeSwitcher";
@@ -71,12 +75,27 @@ const App: React.FC = () => {
   const [isDoneFinding, setIsDoneFinding] = useState(false);
   const [isError, setIsError] = useState(false);
   const bg = useColorModeValue("white", "gray.800");
+  const tooltipCode = useColorModeValue("gray", "black");
   const [userID, setUserID] = useState("");
   const handleChange = (valueAsString: string) => setUserID(valueAsString);
 
   const stepOne = (
     <FormControl id="userID">
-      <FormLabel>Goodreads user ID</FormLabel>
+      <FormLabel d="flex" alignItems="center">
+        Goodreads user ID
+        <Tooltip
+          hasArrow
+          placement="top"
+          label={
+            <Text>
+              Find the number in the URL of your Goodreads profile, following{" "}
+              <Code colorScheme={tooltipCode}>/user/show/</Code>.
+            </Text>
+          }
+        >
+          <QuestionOutlineIcon ml={2} mt="3px" />
+        </Tooltip>
+      </FormLabel>
       <NumberInput onChange={handleChange} value={userID}>
         <NumberInputField />
       </NumberInput>
