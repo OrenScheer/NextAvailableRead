@@ -57,7 +57,7 @@ const FormSteps = ({
   });
   const tooltipCode = useColorModeValue("gray", "black");
 
-  const stepOne = (
+  const userIDStep = (
     <FormControl id="userID">
       <FormLabel d="flex" alignItems="center">
         Goodreads user ID
@@ -84,7 +84,7 @@ const FormSteps = ({
     </FormControl>
   );
 
-  const stepThree = (
+  const librarySelectStep = (
     <Box width="300px" textAlign="left">
       <CustomSelect
         options={libraries}
@@ -99,7 +99,7 @@ const FormSteps = ({
     </Box>
   );
 
-  const stepFour = (
+  const numberOfBooksStep = (
     <FormControl id="numberOfBooks">
       <NumberInput
         defaultValue={1}
@@ -118,19 +118,40 @@ const FormSteps = ({
   );
 
   const steps = [
-    { label: "Select an account", content: stepOne },
+    { label: "Select an account", content: userIDStep },
     {
       label: "Select a shelf",
       content: <ShelfSelector userID={userID} setShelf={setShelf} />,
     },
-    { label: "Select a library", content: stepThree },
-    { label: "Select the number of books", content: stepFour },
+    { label: "Select a library", content: librarySelectStep },
+    { label: "Select the number of books", content: numberOfBooksStep },
   ];
 
+  const validate = (): boolean => {
+    if (activeStep === 0) {
+      return !!userID;
+    }
+    if (activeStep === 1) {
+      return !!shelf;
+    }
+    if (activeStep === 2) {
+      if (shelf && numberOfBooks > shelf.numberOfBooks) {
+        setNumberOfBooks(shelf.numberOfBooks);
+      }
+      return !!librarySelection && !!libraryPrefix;
+    }
+    if (activeStep === 3) {
+      return !!numberOfBooks && !!shelf && numberOfBooks <= shelf.numberOfBooks;
+    }
+    return true;
+  };
+
   const advance = () => {
-    nextStep();
-    if (activeStep === steps.length - 1 && shelf) {
-      findBooks();
+    if (validate()) {
+      nextStep();
+      if (activeStep === steps.length - 1 && shelf) {
+        findBooks();
+      }
     }
   };
 
@@ -141,7 +162,15 @@ const FormSteps = ({
           <Step label={label} key={label}>
             <Flex minH="100px">
               <>
-                <Flex direction="column" maxW="300px">
+                <Flex
+                  direction="column"
+                  maxW="300px"
+                  onKeyUp={(e) => {
+                    if (e.key === "Enter") {
+                      advance();
+                    }
+                  }}
+                >
                   {stepContent}
                   <Flex mt={4}>
                     <Button
