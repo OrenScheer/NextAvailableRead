@@ -1,6 +1,6 @@
 import express, { Application, Request, Response } from "express";
 import axios from "axios";
-import cheerio from "cheerio";
+import cheerio, { Cheerio, Element } from "cheerio";
 import cors from "cors";
 import dotenv from "dotenv";
 import BluebirdPromise from "bluebird";
@@ -45,9 +45,10 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
 
     const $ = cheerio.load(page.data);
     const shelves: Shelf[] = [];
-    $(".userShelf > a").each((_, e) => {
-      const text = $(e).text();
-      const link = $(e).attr("href") as string;
+
+    const parseShelf = (shelfLink: Cheerio<Element>) => {
+      const text = shelfLink.text();
+      const link = shelfLink.attr("href") as string;
       const newShelf: Shelf = {
         name: text
           .substring(0, text.indexOf("("))
@@ -60,7 +61,12 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
           10
         ),
       };
-      shelves.push(newShelf);
+      return newShelf;
+    };
+
+    shelves.push(parseShelf($("#shelvesSection > a")));
+    $(".userShelf > a").each((_, e) => {
+      shelves.push(parseShelf($(e)));
     });
     if (shelves.length === 0) {
       throw new Error("You have no shelves!");
