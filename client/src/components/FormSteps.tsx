@@ -14,11 +14,7 @@ import {
   NumberInput,
   NumberInputField,
   NumberInputStepper,
-  Text,
-  Tooltip,
-  useColorModeValue,
 } from "@chakra-ui/react";
-import { QuestionOutlineIcon } from "@chakra-ui/icons";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { LibraryOption, Shelf } from "../types";
 import ShelfSelector from "./ShelfSelector";
@@ -55,24 +51,11 @@ const FormSteps = ({
   const { nextStep, prevStep, activeStep } = useSteps({
     initialStep: 0,
   });
-  const tooltipCode = useColorModeValue("gray", "black");
 
   const userIDStep = (
     <FormControl id="userID">
       <FormLabel d="flex" alignItems="center">
         Goodreads user ID
-        <Tooltip
-          hasArrow
-          placement="top"
-          label={
-            <Text>
-              Find the number in the URL of your Goodreads profile, following{" "}
-              <Code colorScheme={tooltipCode}>/user/show/</Code>.
-            </Text>
-          }
-        >
-          <QuestionOutlineIcon ml={2} mt="3px" />
-        </Tooltip>
       </FormLabel>
       <NumberInput
         onChange={(valueAsString: string) => setUserID(valueAsString)}
@@ -80,7 +63,12 @@ const FormSteps = ({
       >
         <NumberInputField />
       </NumberInput>
-      <FormHelperText>Your Goodreads profile must be public.</FormHelperText>
+      <FormHelperText textAlign="left">
+        Find the ID in the URL of your Goodreads profile, following{" "}
+        <Code>/user/show/</Code>. <br />
+        <br />
+        Your profile must be public.
+      </FormHelperText>
     </FormControl>
   );
 

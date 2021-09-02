@@ -1,35 +1,13 @@
 import * as React from "react";
-
-import {
-  Box,
-  Heading,
-  Flex,
-  Button,
-  FormControl,
-  FormLabel,
-  FormHelperText,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  useColorModeValue,
-  Tooltip,
-  Code,
-  Text,
-} from "@chakra-ui/react";
-import { Step, Steps, useSteps } from "chakra-ui-steps";
 import { useState } from "react";
 
-import { FaBook } from "react-icons/fa";
-import { QuestionOutlineIcon } from "@chakra-ui/icons";
-import { Book, Shelf } from "./types";
+import { Box, Heading, Flex, useColorModeValue } from "@chakra-ui/react";
+import { useSteps } from "chakra-ui-steps";
 
+import { FaBook } from "react-icons/fa";
+import { Book, Shelf } from "./types";
 import ColorModeSwitcher from "./components/ColorModeSwitcher";
-import ShelfSelector from "./components/ShelfSelector";
 import BookList from "./components/BookList";
-import libraries from "./libraries";
-import CustomSelect from "./components/Select";
 import FormSteps from "./components/FormSteps";
 
 const dummyBook: Book = {
@@ -59,10 +37,6 @@ const createDummyLoadedArray = (numberOfBooks: number): boolean[] => {
 };
 
 const App: React.FC = () => {
-  const { nextStep, prevStep, activeStep } = useSteps({
-    initialStep: 0,
-  });
-
   const [userID, setUserID] = useState("");
   const [shelf, setShelf] = useState<Shelf>();
   const [librarySelection, setLibrarySelection] = useState<{
