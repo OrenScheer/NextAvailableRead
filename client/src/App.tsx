@@ -30,6 +30,7 @@ import ShelfSelector from "./components/ShelfSelector";
 import BookList from "./components/BookList";
 import libraries from "./libraries";
 import CustomSelect from "./components/Select";
+import FormSteps from "./components/FormSteps";
 
 const dummyBook: Book = {
   title: "",
@@ -62,144 +63,73 @@ const App: React.FC = () => {
     initialStep: 0,
   });
 
+  const [userID, setUserID] = useState("");
   const [shelf, setShelf] = useState<Shelf>();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [libraryPrefix, setLibraryPrefix] = useState("");
-  const [selectValue, setSelectValue] = useState<{
+  const [librarySelection, setLibrarySelection] = useState<{
     label: string;
     value: string;
   }>({ label: "", value: "" });
+  const [libraryPrefix, setLibraryPrefix] = useState("");
+  const [numberOfBooks, setNumberOfBooks] = useState(1);
+
+  const [books, setBooks] = useState<Book[]>([]);
   const [isBookListVisible, setIsBookListVisible] = useState(false);
   const [areBooksLoaded, setAreBooksLoaded] = useState<boolean[]>([]);
-  const [numberOfBooks, setNumberOfBooks] = useState("1");
   const [isDoneFinding, setIsDoneFinding] = useState(false);
   const [isError, setIsError] = useState(false);
   const bg = useColorModeValue("white", "gray.800");
-  const tooltipCode = useColorModeValue("gray", "black");
-  const [userID, setUserID] = useState("");
-  const handleChange = (valueAsString: string) => setUserID(valueAsString);
 
-  const stepOne = (
-    <FormControl id="userID">
-      <FormLabel d="flex" alignItems="center">
-        Goodreads user ID
-        <Tooltip
-          hasArrow
-          placement="top"
-          label={
-            <Text>
-              Find the number in the URL of your Goodreads profile, following{" "}
-              <Code colorScheme={tooltipCode}>/user/show/</Code>.
-            </Text>
-          }
-        >
-          <QuestionOutlineIcon ml={2} mt="3px" />
-        </Tooltip>
-      </FormLabel>
-      <NumberInput onChange={handleChange} value={userID}>
-        <NumberInputField />
-      </NumberInput>
-      <FormHelperText>Your Goodreads profile must be public.</FormHelperText>
-    </FormControl>
-  );
-
-  const stepThree = (
-    <Box width="300px" textAlign="left">
-      <CustomSelect
-        options={libraries}
-        width="300px"
-        value={selectValue}
-        onChange={(newValue: { label: string; value: string }) => {
-          setSelectValue(newValue);
-          setLibraryPrefix(newValue.value);
-        }}
-        placeholder="Select or type a library"
-      />
-    </Box>
-  );
-
-  const stepFour = (
-    <FormControl id="numberOfBooks">
-      <NumberInput
-        defaultValue={1}
-        min={1}
-        max={shelf ? shelf.numberOfBooks : 1}
-        value={numberOfBooks}
-        onChange={(valueString) => setNumberOfBooks(valueString)}
-      >
-        <NumberInputField />
-        <NumberInputStepper>
-          <NumberIncrementStepper />
-          <NumberDecrementStepper />
-        </NumberInputStepper>
-      </NumberInput>
-    </FormControl>
-  );
-
-  const steps = [
-    { label: "Select an account", content: stepOne },
-    {
-      label: "Select a shelf",
-      content: <ShelfSelector userID={userID} setShelf={setShelf} />,
-    },
-    { label: "Select a library", content: stepThree },
-    { label: "Select the number of books", content: stepFour },
-  ];
-
-  const advance = () => {
-    nextStep();
-    if (activeStep === steps.length - 1 && shelf) {
-      setBooks(createDummyBooksArray(parseInt(numberOfBooks, 10)));
-      setAreBooksLoaded(createDummyLoadedArray(parseInt(numberOfBooks, 10)));
-      setIsBookListVisible(true);
-      setIsDoneFinding(false);
-      setIsError(false);
-      const events = new EventSource(
-        `/books?url=${encodeURI(shelf.url)}&numberOfBooksOnShelf=${encodeURI(
-          shelf.numberOfBooks.toString()
-        )}&numberOfBooksRequested=${encodeURI(numberOfBooks)}
+  const findBooks = () => {
+    setBooks(createDummyBooksArray(numberOfBooks));
+    setAreBooksLoaded(createDummyLoadedArray(numberOfBooks));
+    setIsBookListVisible(true);
+    setIsDoneFinding(false);
+    setIsError(false);
+    const events = new EventSource(
+      `/books?url=${encodeURI(shelf!.url)}&numberOfBooksOnShelf=${encodeURI(
+        shelf!.numberOfBooks.toString()
+      )}&numberOfBooksRequested=${encodeURI(numberOfBooks.toString())}
         &biblioCommonsPrefix=${libraryPrefix}`
-      );
-      let numberOfBooksReceived = 0;
-      events.onmessage = (event: MessageEvent) => {
-        let data: string;
-        if (event instanceof MessageEvent) {
-          data = event.data as string;
-        } else {
-          return;
-        }
-        if (data.toLowerCase().includes("goodreads found")) {
-          console.log("Shelves scanned.");
-        } else if (data.toLowerCase().includes("done here")) {
-          events.close();
-          setIsDoneFinding(true);
-        } else if (data.toLowerCase().includes("error")) {
-          events.close();
-          setIsError(true);
-          setIsDoneFinding(true);
-        } else {
-          const newBook: Book = JSON.parse(data) as Book;
-          setBooks((oldBooks) =>
-            oldBooks.map((book, index) => {
-              if (index === numberOfBooksReceived) {
-                return newBook;
-              }
-              return book;
-            })
-          );
-          setAreBooksLoaded((oldAreBooksLoaded) =>
-            oldAreBooksLoaded.map((loaded, index) => {
-              if (index === numberOfBooksReceived) {
-                return true;
-              }
-              return loaded;
-            })
-          );
-          console.log("received");
-          numberOfBooksReceived += 1;
-        }
-      };
-    }
+    );
+    let numberOfBooksReceived = 0;
+    events.onmessage = (event: MessageEvent) => {
+      let data: string;
+      if (event instanceof MessageEvent) {
+        data = event.data as string;
+      } else {
+        return;
+      }
+      if (data.toLowerCase().includes("goodreads found")) {
+        console.log("Shelves scanned.");
+      } else if (data.toLowerCase().includes("done here")) {
+        events.close();
+        setIsDoneFinding(true);
+      } else if (data.toLowerCase().includes("error")) {
+        events.close();
+        setIsError(true);
+        setIsDoneFinding(true);
+      } else {
+        const newBook: Book = JSON.parse(data) as Book;
+        setBooks((oldBooks) =>
+          oldBooks.map((book, index) => {
+            if (index === numberOfBooksReceived) {
+              return newBook;
+            }
+            return book;
+          })
+        );
+        setAreBooksLoaded((oldAreBooksLoaded) =>
+          oldAreBooksLoaded.map((loaded, index) => {
+            if (index === numberOfBooksReceived) {
+              return true;
+            }
+            return loaded;
+          })
+        );
+        console.log("received");
+        numberOfBooksReceived += 1;
+      }
+    };
   };
 
   return (
@@ -236,53 +166,19 @@ const App: React.FC = () => {
         alignItems="flex-start"
         direction={{ base: "column", md: "row" }}
       >
-        <Flex direction="column" pos={{ md: "sticky" }} top="100px" mb={3}>
-          <Steps activeStep={activeStep} mb={4} orientation="vertical">
-            {steps.map(({ label, content: stepContent }) => (
-              <Step label={label} key={label}>
-                <Flex minH="100px">
-                  <>
-                    <Flex direction="column" maxW="300px">
-                      {stepContent}
-                      <Flex mt={4}>
-                        <Button
-                          onClick={prevStep}
-                          mr={4}
-                          isDisabled={activeStep <= 0}
-                          colorScheme="teal"
-                          variant="outline"
-                        >
-                          Previous step
-                        </Button>
-                        <Button
-                          onClick={advance}
-                          isDisabled={activeStep >= steps.length}
-                          colorScheme="teal"
-                          variant="solid"
-                        >
-                          Next step
-                        </Button>
-                      </Flex>
-                    </Flex>
-                  </>
-                </Flex>
-              </Step>
-            ))}
-          </Steps>
-          {activeStep === steps.length && (
-            <Flex>
-              <Button
-                onClick={prevStep}
-                mr={4}
-                isDisabled={activeStep <= 0}
-                colorScheme="teal"
-                variant="outline"
-              >
-                Previous step
-              </Button>
-            </Flex>
-          )}
-        </Flex>
+        <FormSteps
+          userID={userID}
+          setUserID={setUserID}
+          shelf={shelf}
+          setShelf={setShelf}
+          librarySelection={librarySelection}
+          setLibrarySelection={setLibrarySelection}
+          libraryPrefix={libraryPrefix}
+          setLibraryPrefix={setLibraryPrefix}
+          numberOfBooks={numberOfBooks}
+          setNumberOfBooks={setNumberOfBooks}
+          findBooks={findBooks}
+        />
         <BookList
           books={books}
           isVisible={isBookListVisible}

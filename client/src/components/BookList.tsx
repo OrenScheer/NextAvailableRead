@@ -1,4 +1,6 @@
 import * as React from "react";
+import { ReactElement } from "react";
+
 import {
   Box,
   Heading,
@@ -17,7 +19,6 @@ import {
   Alert,
 } from "@chakra-ui/react";
 import { FaBookOpen, FaGoodreads, FaStar, VscLibrary } from "react-icons/all";
-import { ReactElement } from "react";
 import { Book } from "../types";
 import BookFallback from "../images/BookFallback.png";
 

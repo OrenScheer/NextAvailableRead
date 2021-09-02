@@ -13,3 +13,8 @@ export type Book = {
   imageUrl: string;
   libraryUrl: string;
 };
+
+export type LibraryOption = {
+  label: string;
+  value: string;
+};

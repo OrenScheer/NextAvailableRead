@@ -1,6 +1,13 @@
-import { ReactElement, useEffect, useState } from "react";
-import axios, { AxiosResponse } from "axios";
 import * as React from "react";
+import {
+  Dispatch,
+  ReactElement,
+  SetStateAction,
+  useEffect,
+  useState,
+} from "react";
+
+import axios, { AxiosResponse } from "axios";
 import {
   Stack,
   Radio,
@@ -17,7 +24,7 @@ import { Shelf } from "../types";
 
 type ShelfProps = {
   userID: string;
-  setShelf: React.Dispatch<Shelf>;
+  setShelf: Dispatch<SetStateAction<Shelf | undefined>>;
 };
 
 const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
