@@ -85,7 +85,7 @@ const App: React.FC = () => {
         events.close();
         setIsError(true);
         setIsDoneFinding(true);
-      } else {
+      } else if (!data.toLowerCase().includes("goodreads found")) {
         const newBook: Book = JSON.parse(data) as Book;
         setBooks((oldBooks) =>
           oldBooks.map((book, index) => {
