@@ -53,7 +53,7 @@ const App: React.FC = () => {
   const bg = useColorModeValue("white", "gray.800");
   const apiUrlPrefix =
     process.env.NODE_ENV === "production"
-      ? "nextavailableread-backend.herokuapp.com"
+      ? "https://nextavailableread-backend.herokuapp.com"
       : "";
 
   const findBooks = () => {

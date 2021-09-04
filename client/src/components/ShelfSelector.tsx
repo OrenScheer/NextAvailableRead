@@ -34,7 +34,7 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
   const [selectedShelfUrl, setSelectedShelfUrl] = useState<string>();
   const apiUrlPrefix =
     process.env.NODE_ENV === "production"
-      ? "nextavailableread-backend.herokuapp.com"
+      ? "https://nextavailableread-backend.herokuapp.com"
       : "";
 
   useEffect(() => {
