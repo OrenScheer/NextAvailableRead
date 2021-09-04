@@ -2,7 +2,6 @@ import * as React from "react";
 import { useState } from "react";
 
 import { Box, Heading, Flex, useColorModeValue } from "@chakra-ui/react";
-import { useSteps } from "chakra-ui-steps";
 
 import { FaBook } from "react-icons/fa";
 import { Book, Shelf } from "./types";
@@ -52,6 +51,10 @@ const App: React.FC = () => {
   const [isDoneFinding, setIsDoneFinding] = useState(false);
   const [isError, setIsError] = useState(false);
   const bg = useColorModeValue("white", "gray.800");
+  const apiUrlPrefix =
+    process.env.NODE_ENV === "production"
+      ? "nextavailableread-backend.herokuapp.com"
+      : "";
 
   const findBooks = () => {
     setBooks(createDummyBooksArray(numberOfBooks));
@@ -60,8 +63,10 @@ const App: React.FC = () => {
     setIsDoneFinding(false);
     setIsError(false);
     const events = new EventSource(
-      `/books?url=${encodeURI(shelf!.url)}&numberOfBooksOnShelf=${encodeURI(
-        shelf!.numberOfBooks.toString()
+      `${apiUrlPrefix}/books?url=${encodeURI(
+        shelf?.url as string
+      )}&numberOfBooksOnShelf=${encodeURI(
+        shelf?.numberOfBooks.toString() as string
       )}&numberOfBooksRequested=${encodeURI(numberOfBooks.toString())}
         &biblioCommonsPrefix=${libraryPrefix}`
     );
@@ -73,9 +78,7 @@ const App: React.FC = () => {
       } else {
         return;
       }
-      if (data.toLowerCase().includes("goodreads found")) {
-        console.log("Shelves scanned.");
-      } else if (data.toLowerCase().includes("done here")) {
+      if (data.toLowerCase().includes("done here")) {
         events.close();
         setIsDoneFinding(true);
       } else if (data.toLowerCase().includes("error")) {
@@ -100,7 +103,6 @@ const App: React.FC = () => {
             return loaded;
           })
         );
-        console.log("received");
         numberOfBooksReceived += 1;
       }
     };

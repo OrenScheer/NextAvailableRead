@@ -32,10 +32,14 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [error, setError] = useState(false);
   const [selectedShelfUrl, setSelectedShelfUrl] = useState<string>();
+  const apiUrlPrefix =
+    process.env.NODE_ENV === "production"
+      ? "nextavailableread-backend.herokuapp.com"
+      : "";
 
   useEffect(() => {
     axios
-      .get(`/users/${userID}/shelves`)
+      .get(`${apiUrlPrefix}/users/${userID}/shelves`)
       .then((res: AxiosResponse<Shelf[]>) => {
         setShelves(res.data);
       })
