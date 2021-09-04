@@ -210,7 +210,7 @@ app.get("/books", (req: Request, res: Response) => {
       ];
     }
 
-    const bookPromises: BluebirdPromise<void>[] = [];
+    let bookPromises: BluebirdPromise<void>[] = [];
     booksFromShelf.forEach((book, i, arr) => {
       bookPromises.push(
         BluebirdPromise.resolve(
@@ -251,6 +251,7 @@ app.get("/books", (req: Request, res: Response) => {
       })
       .finally(() => {
         bookPromises.forEach((promise) => promise.cancel());
+        bookPromises = [];
         res.write(`data: done here\n\n`);
         res.status(200).send();
         res.end();
