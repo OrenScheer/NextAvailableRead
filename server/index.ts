@@ -10,7 +10,7 @@ BluebirdPromise.config({
 });
 
 const app: Application = express();
-const port = 5309;
+const port = process.env.PORT || 5309;
 dotenv.config();
 
 interface Book {
