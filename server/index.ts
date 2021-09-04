@@ -2,7 +2,6 @@ import express, { Application, Request, Response } from "express";
 import axios from "axios";
 import cheerio, { Cheerio, Element } from "cheerio";
 import cors from "cors";
-import dotenv from "dotenv";
 import BluebirdPromise from "bluebird";
 
 BluebirdPromise.config({
@@ -11,7 +10,6 @@ BluebirdPromise.config({
 
 const app: Application = express();
 const port = process.env.PORT || 5309;
-dotenv.config();
 
 interface Book {
   title: string;
@@ -212,17 +210,31 @@ app.get("/books", (req: Request, res: Response) => {
       ];
     }
 
-    const bookPromises: BluebirdPromise<Book>[] = [];
+    const bookPromises: BluebirdPromise<void>[] = [];
     booksFromShelf.forEach((book, i, arr) => {
       bookPromises.push(
-        isAvailable(book, biblioCommonsPrefix)
-          .then(([isIt, link]) => {
-            if (isIt) {
-              console.log(link);
+        BluebirdPromise.resolve(
+          axios.get(
+            `https://${biblioCommonsPrefix}.bibliocommons.com/v2/search?query=(${encodeURI(
+              `title:(${book.title}) AND contributor:(${book.author})`
+            )})&searchType=bl&f_FORMAT=EBOOK`
+          )
+        )
+          .then((page) => {
+            const $ = cheerio.load(page.data);
+            const $available = $(".cp-search-result-item-content")
+              .first()
+              .find(".manifestation-item-format-call-wrap.available");
+            if ($available.length > 0) {
               // eslint-disable-next-line no-param-reassign
-              arr[i].libraryUrl = link;
+              arr[
+                i
+              ].libraryUrl = `https://${biblioCommonsPrefix}.bibliocommons.com${
+                $available.find("a").attr("href") as string
+              }`;
+              console.log(`FOUND ${book.title}`);
               res.write(`data: ${JSON.stringify(book)}\n\n`);
-              return book;
+              return;
             }
             throw new Error("Book is not available.");
           })
@@ -238,12 +250,11 @@ app.get("/books", (req: Request, res: Response) => {
         console.log("Not enough found.");
       })
       .finally(() => {
+        bookPromises.forEach((promise) => promise.cancel());
         res.write(`data: done here\n\n`);
         res.status(200).send();
         res.end();
       });
-
-    bookPromises.forEach((promise) => promise.cancel());
   })().catch((err) => {
     console.log(err);
     res.write(`data: error\n\n`);
