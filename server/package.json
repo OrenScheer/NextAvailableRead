@@ -22,6 +22,7 @@
     "prettier": "^2.3.2"
   },
   "dependencies": {
+    "@sendgrid/mail": "^7.4.6",
     "@types/bluebird": "^3.5.36",
     "@types/bluebird-global": "^3.5.13",
     "@types/cors": "^2.8.12",

@@ -3,13 +3,18 @@ import axios from "axios";
 import cheerio, { Cheerio, Element } from "cheerio";
 import cors from "cors";
 import BluebirdPromise from "bluebird";
+import dotenv from "dotenv";
+import sgMail from "@sendgrid/mail";
 
 BluebirdPromise.config({
   cancellation: true,
 });
 
 const app: Application = express();
+dotenv.config();
 const port = process.env.PORT || 5309;
+const sendgridApiKey = process.env.SENDGRID_API_KEY || "";
+sgMail.setApiKey(sendgridApiKey);
 
 interface Book {
   title: string;
@@ -289,6 +294,42 @@ app.get("/availability", (req: Request, res: Response) => {
     console.log(err);
     res.status(404).send();
   });
+});
+
+interface BugReport {
+  type: "Books not loading" | "Library link leads to wrong page" | "Other";
+  bookTitle?: string;
+  bookAuthor?: string;
+  description?: string;
+}
+
+app.post("/bugreport", (req: Request, res: Response) => {
+  const { type, bookTitle, bookAuthor, description } = req.body as BugReport;
+  let message = `<p>Type: ${type}<br />`;
+  if (bookTitle) {
+    message += `Title: ${bookTitle}<br />`;
+  }
+  if (bookAuthor) {
+    message += `Author: ${bookAuthor}<br />`;
+  }
+  if (description) {
+    message += `Description: ${description}<br/>`;
+  }
+  message += "</p>";
+  const msg = {
+    to: "nextavailableread-bugs@orenscheer.me",
+    from: "nextavailableread@orenscheer.me",
+    subject: "NextAvailableRead bug report",
+    html: message,
+  };
+  sgMail
+    .send(msg)
+    .then(() => {
+      res.status(200).send();
+    })
+    .catch((err) => {
+      res.status(404).send(err);
+    });
 });
 
 app.listen(port, () => console.log(`Server is listening on port ${port}!`));
