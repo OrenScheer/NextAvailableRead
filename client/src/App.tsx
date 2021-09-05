@@ -1,13 +1,23 @@
 import * as React from "react";
 import { useState } from "react";
 
-import { Box, Heading, Flex, useColorModeValue } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Divider,
+  Flex,
+  Heading,
+  Link,
+  Text,
+  useColorModeValue,
+} from "@chakra-ui/react";
 
 import { FaBook } from "react-icons/fa";
 import { Book, Shelf } from "./types";
 import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import BookList from "./components/BookList";
 import FormSteps from "./components/FormSteps";
+import BugReportPopover from "./components/BugReportPopover";
 
 const dummyBook: Book = {
   title: "",
@@ -51,6 +61,11 @@ const App: React.FC = () => {
   const [isDoneFinding, setIsDoneFinding] = useState(false);
   const [isError, setIsError] = useState(false);
   const bg = useColorModeValue("white", "gray.800");
+  const footerText = useColorModeValue(
+    "rgb(113, 128, 150)",
+    "rgba(255, 255, 255, 0.48)"
+  );
+
   const apiUrlPrefix =
     process.env.NODE_ENV === "production"
       ? "https://nextavailableread-backend.herokuapp.com"
@@ -109,61 +124,88 @@ const App: React.FC = () => {
   };
 
   return (
-    <Box
+    <Flex
       textAlign="center"
       fontSize="xl"
       pb={8}
-      d="flex"
-      flexDir="column"
+      direction="column"
       alignItems="center"
       bg={bg}
+      position="relative"
+      minHeight="100vh"
     >
-      <Flex bg={bg} width="100%" zIndex="9" pos="sticky" top="0">
+      <Flex direction="column" alignItems="center" width="100%" pb="48px">
+        <Flex bg={bg} width="100%" zIndex="9" pos="sticky" top="0">
+          <Flex
+            width="100%"
+            justifyContent="space-between"
+            pt={6}
+            pb={6}
+            px={8}
+            height="100px"
+            alignItems="flex-end"
+          >
+            <Heading d="flex" alignItems="center" color="#38B2AC">
+              <FaBook style={{ marginRight: "10px" }} />
+              NextAvailableRead
+            </Heading>
+            <ColorModeSwitcher zIndex="9" />
+          </Flex>
+        </Flex>
         <Flex
           width="100%"
-          justifyContent="space-between"
-          pt={6}
-          pb={6}
           px={8}
-          height="100px"
-          alignItems="flex-end"
+          justifyContent="space-between"
+          alignItems="flex-start"
+          direction={{ base: "column", md: "row" }}
         >
-          <Heading d="flex" alignItems="center" color="#38B2AC">
-            <FaBook style={{ marginRight: "10px" }} />
-            NextAvailableRead
-          </Heading>
-          <ColorModeSwitcher zIndex="9" />
+          <FormSteps
+            userID={userID}
+            setUserID={setUserID}
+            shelf={shelf}
+            setShelf={setShelf}
+            librarySelection={librarySelection}
+            setLibrarySelection={setLibrarySelection}
+            libraryPrefix={libraryPrefix}
+            setLibraryPrefix={setLibraryPrefix}
+            numberOfBooks={numberOfBooks}
+            setNumberOfBooks={setNumberOfBooks}
+            findBooks={findBooks}
+            apiUrlPrefix={apiUrlPrefix}
+          />
+          <BookList
+            books={books}
+            isVisible={isBookListVisible}
+            isLoaded={areBooksLoaded}
+            isDoneFinding={isDoneFinding}
+            isError={isError}
+          />
         </Flex>
       </Flex>
-      <Flex
+      <Box
+        as="footer"
+        position="absolute"
+        bottom="0"
+        height="48px"
         width="100%"
         px={8}
-        justifyContent="space-between"
-        alignItems="flex-start"
-        direction={{ base: "column", md: "row" }}
+        mb={2}
       >
-        <FormSteps
-          userID={userID}
-          setUserID={setUserID}
-          shelf={shelf}
-          setShelf={setShelf}
-          librarySelection={librarySelection}
-          setLibrarySelection={setLibrarySelection}
-          libraryPrefix={libraryPrefix}
-          setLibraryPrefix={setLibraryPrefix}
-          numberOfBooks={numberOfBooks}
-          setNumberOfBooks={setNumberOfBooks}
-          findBooks={findBooks}
-        />
-        <BookList
-          books={books}
-          isVisible={isBookListVisible}
-          isLoaded={areBooksLoaded}
-          isDoneFinding={isDoneFinding}
-          isError={isError}
-        />
-      </Flex>
-    </Box>
+        <Divider mb={2} />
+        <Flex justifyContent="space-between" alignItems="center">
+          <Text fontSize="sm" fontWeight={600} color={footerText}>
+            Created by{" "}
+            <Link href="https://orenscheer.me" isExternal color="#38B2AC">
+              Oren Scheer
+            </Link>
+          </Text>
+          <BugReportPopover
+            footerTextColor={footerText}
+            apiUrlPrefix={apiUrlPrefix}
+          />
+        </Flex>
+      </Box>
+    </Flex>
   );
 };
 

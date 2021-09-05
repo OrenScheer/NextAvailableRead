@@ -25,17 +25,18 @@ import { Shelf } from "../types";
 type ShelfProps = {
   userID: string;
   setShelf: Dispatch<SetStateAction<Shelf | undefined>>;
+  apiUrlPrefix: string;
 };
 
-const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
+const ShelfSelector = ({
+  userID,
+  setShelf,
+  apiUrlPrefix,
+}: ShelfProps): ReactElement => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [error, setError] = useState(false);
   const [selectedShelfUrl, setSelectedShelfUrl] = useState<string>();
-  const apiUrlPrefix =
-    process.env.NODE_ENV === "production"
-      ? "https://nextavailableread-backend.herokuapp.com"
-      : "";
 
   useEffect(() => {
     axios

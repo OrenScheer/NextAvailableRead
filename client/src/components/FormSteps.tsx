@@ -33,6 +33,7 @@ type FormStepsProps = {
   numberOfBooks: number;
   setNumberOfBooks: Dispatch<SetStateAction<number>>;
   findBooks: () => void;
+  apiUrlPrefix: string;
 };
 
 const FormSteps = ({
@@ -47,6 +48,7 @@ const FormSteps = ({
   numberOfBooks,
   setNumberOfBooks,
   findBooks,
+  apiUrlPrefix,
 }: FormStepsProps): ReactElement => {
   const { nextStep, prevStep, activeStep } = useSteps({
     initialStep: 0,
@@ -109,7 +111,13 @@ const FormSteps = ({
     { label: "Select an account", content: userIDStep },
     {
       label: "Select a shelf",
-      content: <ShelfSelector userID={userID} setShelf={setShelf} />,
+      content: (
+        <ShelfSelector
+          userID={userID}
+          setShelf={setShelf}
+          apiUrlPrefix={apiUrlPrefix}
+        />
+      ),
     },
     { label: "Select a library", content: librarySelectStep },
     { label: "Select the number of books", content: numberOfBooksStep },
@@ -144,8 +152,8 @@ const FormSteps = ({
   };
 
   return (
-    <Flex direction="column" pos={{ md: "sticky" }} top="100px" mb={3}>
-      <Steps activeStep={activeStep} mb={4} orientation="vertical">
+    <Flex direction="column" pos={{ md: "sticky" }} top="100px">
+      <Steps activeStep={activeStep} orientation="vertical">
         {steps.map(({ label, content: stepContent }) => (
           <Step label={label} key={label}>
             <Flex minH="100px">
