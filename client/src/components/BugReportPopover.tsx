@@ -70,7 +70,7 @@ const BugReportPopover = ({
           Report a bug
         </Button>
       </PopoverTrigger>
-      <PopoverContent textAlign="left" mr={2} p={5} width="350px">
+      <PopoverContent textAlign="left" mr={8} p={5} width="328px">
         <PopoverArrow />
         <PopoverCloseButton />
         <form
@@ -166,7 +166,7 @@ const BugReportPopover = ({
               </Button>
             </ButtonGroup>
             {isError && (
-              <Alert status="error" fontSize="sm">
+              <Alert status="error" fontSize="14px">
                 <AlertIcon />
                 There was an error. Please try again.
               </Alert>
