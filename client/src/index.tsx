@@ -13,6 +13,12 @@ const theme: ChakraTheme = extendTheme({
   components: {
     Steps,
   },
+  colors: {
+    nextAvailableReadBlue: {
+      200: "#87CDE5",
+      500: "#458EB2",
+    },
+  },
 }) as ChakraTheme;
 
 ReactDOM.render(

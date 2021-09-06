@@ -20,6 +20,7 @@ import { LibraryOption, Shelf } from "../types";
 import ShelfSelector from "./ShelfSelector";
 import CustomSelect from "./Select";
 import libraries from "../libraries";
+import { COLOR_SCHEME } from "../constants";
 
 type FormStepsProps = {
   userID: string;
@@ -33,7 +34,6 @@ type FormStepsProps = {
   numberOfBooks: number;
   setNumberOfBooks: Dispatch<SetStateAction<number>>;
   findBooks: () => void;
-  apiUrlPrefix: string;
 };
 
 const FormSteps = ({
@@ -48,7 +48,6 @@ const FormSteps = ({
   numberOfBooks,
   setNumberOfBooks,
   findBooks,
-  apiUrlPrefix,
 }: FormStepsProps): ReactElement => {
   const { nextStep, prevStep, activeStep } = useSteps({
     initialStep: 0,
@@ -111,13 +110,7 @@ const FormSteps = ({
     { label: "Select an account", content: userIDStep },
     {
       label: "Select a shelf",
-      content: (
-        <ShelfSelector
-          userID={userID}
-          setShelf={setShelf}
-          apiUrlPrefix={apiUrlPrefix}
-        />
-      ),
+      content: <ShelfSelector userID={userID} setShelf={setShelf} />,
     },
     { label: "Select a library", content: librarySelectStep },
     { label: "Select the number of books", content: numberOfBooksStep },
@@ -153,7 +146,11 @@ const FormSteps = ({
 
   return (
     <Flex direction="column" pos={{ md: "sticky" }} top="100px">
-      <Steps activeStep={activeStep} orientation="vertical">
+      <Steps
+        activeStep={activeStep}
+        orientation="vertical"
+        colorScheme={COLOR_SCHEME}
+      >
         {steps.map(({ label, content: stepContent }) => (
           <Step label={label} key={label}>
             <Flex minH="100px">
@@ -173,7 +170,7 @@ const FormSteps = ({
                       onClick={prevStep}
                       mr={4}
                       isDisabled={activeStep <= 0}
-                      colorScheme="teal"
+                      colorScheme={COLOR_SCHEME}
                       variant="outline"
                     >
                       Previous step
@@ -181,7 +178,7 @@ const FormSteps = ({
                     <Button
                       onClick={advance}
                       isDisabled={activeStep >= steps.length}
-                      colorScheme="teal"
+                      colorScheme={COLOR_SCHEME}
                       variant="solid"
                     >
                       Next step
@@ -199,7 +196,7 @@ const FormSteps = ({
             onClick={prevStep}
             mr={4}
             isDisabled={activeStep <= 0}
-            colorScheme="teal"
+            colorScheme={COLOR_SCHEME}
             variant="outline"
           >
             Previous step

@@ -19,28 +19,30 @@ import {
   AlertTitle,
   AlertDescription,
   Flex,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { Shelf } from "../types";
+import { API_URL_PREFIX, COLOR_SCHEME } from "../constants";
 
 type ShelfProps = {
   userID: string;
   setShelf: Dispatch<SetStateAction<Shelf | undefined>>;
-  apiUrlPrefix: string;
 };
 
-const ShelfSelector = ({
-  userID,
-  setShelf,
-  apiUrlPrefix,
-}: ShelfProps): ReactElement => {
+const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [shelves, setShelves] = useState<Shelf[]>([]);
   const [error, setError] = useState(false);
   const [selectedShelfUrl, setSelectedShelfUrl] = useState<string>();
 
+  const spinnerColor = useColorModeValue(
+    `${COLOR_SCHEME}.500`,
+    `${COLOR_SCHEME}.200`
+  );
+
   useEffect(() => {
     axios
-      .get(`${apiUrlPrefix}/users/${userID}/shelves`)
+      .get(`${API_URL_PREFIX}/users/${userID}/shelves`)
       .then((res: AxiosResponse<Shelf[]>) => {
         setShelves(res.data);
       })
@@ -67,7 +69,7 @@ const ShelfSelector = ({
                 value={url}
                 key={name}
                 size="lg"
-                colorScheme="teal"
+                colorScheme={COLOR_SCHEME}
                 isDisabled={numberOfBooks < 1}
               >
                 <Text d="flex" alignItems="center">
@@ -79,7 +81,7 @@ const ShelfSelector = ({
         </RadioGroup>
       ) : (
         <Flex direction="column" alignItems="flex-start">
-          <Spinner size="xl" color="teal" mb={5} />
+          <Spinner size="xl" color={spinnerColor} mb={5} />
           <Text>Getting shelves...</Text>
         </Flex>
       )}

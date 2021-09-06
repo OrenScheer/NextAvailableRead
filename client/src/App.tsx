@@ -18,6 +18,7 @@ import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import BookList from "./components/BookList";
 import FormSteps from "./components/FormSteps";
 import BugReportPopover from "./components/BugReportPopover";
+import { API_URL_PREFIX, COLOR_SCHEME } from "./constants";
 
 const dummyBook: Book = {
   title: "",
@@ -65,11 +66,10 @@ const App: React.FC = () => {
     "rgb(113, 128, 150)",
     "rgba(255, 255, 255, 0.48)"
   );
-
-  const apiUrlPrefix =
-    process.env.NODE_ENV === "production"
-      ? "https://nextavailableread-backend.herokuapp.com"
-      : "";
+  const accentColor = useColorModeValue(
+    `${COLOR_SCHEME}.500`,
+    `${COLOR_SCHEME}.200`
+  );
 
   const findBooks = () => {
     setBooks(createDummyBooksArray(numberOfBooks));
@@ -78,7 +78,7 @@ const App: React.FC = () => {
     setIsDoneFinding(false);
     setIsError(false);
     const events = new EventSource(
-      `${apiUrlPrefix}/books?url=${encodeURI(
+      `${API_URL_PREFIX}/books?url=${encodeURI(
         shelf?.url as string
       )}&numberOfBooksOnShelf=${encodeURI(
         shelf?.numberOfBooks.toString() as string
@@ -145,7 +145,7 @@ const App: React.FC = () => {
             height="100px"
             alignItems="flex-end"
           >
-            <Heading d="flex" alignItems="center" color="#38B2AC">
+            <Heading d="flex" alignItems="center" color={accentColor}>
               <FaBook style={{ marginRight: "10px" }} />
               NextAvailableRead
             </Heading>
@@ -171,7 +171,6 @@ const App: React.FC = () => {
             numberOfBooks={numberOfBooks}
             setNumberOfBooks={setNumberOfBooks}
             findBooks={findBooks}
-            apiUrlPrefix={apiUrlPrefix}
           />
           <BookList
             books={books}
@@ -207,15 +206,12 @@ const App: React.FC = () => {
             </Link>
             <Text fontSize="sm" fontWeight={600} color={footerText}>
               Created by{" "}
-              <Link href="https://orenscheer.me" isExternal color="#38B2AC">
+              <Link href="https://orenscheer.me" isExternal color={accentColor}>
                 Oren Scheer
               </Link>
             </Text>
           </Flex>
-          <BugReportPopover
-            footerTextColor={footerText}
-            apiUrlPrefix={apiUrlPrefix}
-          />
+          <BugReportPopover footerTextColor={footerText} />
         </Flex>
       </Box>
     </Flex>

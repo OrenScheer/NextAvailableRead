@@ -21,6 +21,7 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import axios from "axios";
+import { API_URL_PREFIX, COLOR_SCHEME } from "../constants";
 
 const bugTypes = [
   "Books not loading",
@@ -32,12 +33,10 @@ type BugType = typeof bugTypes[number];
 
 type BugReportPopoverProps = {
   footerTextColor: string;
-  apiUrlPrefix: string;
 };
 
 const BugReportPopover = ({
   footerTextColor,
-  apiUrlPrefix,
 }: BugReportPopoverProps): ReactElement => {
   const [chosenBugType, setChosenBugType] = useState<BugType>(bugTypes[0]);
   const [bookTitle, setBookTitle] = useState<string>("");
@@ -79,7 +78,7 @@ const BugReportPopover = ({
             e.preventDefault();
             setIsSubmitting(true);
             axios
-              .post(`${apiUrlPrefix}/bugreport`, {
+              .post(`${API_URL_PREFIX}/bugreport`, {
                 type: chosenBugType,
                 bookTitle,
                 bookAuthor,
@@ -149,6 +148,7 @@ const BugReportPopover = ({
             <ButtonGroup d="flex" justifyContent="flex-end">
               <Button
                 variant="outline"
+                colorScheme={COLOR_SCHEME}
                 onClick={() => {
                   onClose();
                   clearFields();
@@ -158,7 +158,7 @@ const BugReportPopover = ({
                 Cancel
               </Button>
               <Button
-                colorScheme="teal"
+                colorScheme={COLOR_SCHEME}
                 type="submit"
                 isLoading={isSubmitting}
                 loadingText="Submitting"
