@@ -319,7 +319,9 @@ app.post("/bugreport", (req: Request, res: Response) => {
   const msg = {
     to: "nextavailableread-bugs@orenscheer.me",
     from: "nextavailableread@orenscheer.me",
-    subject: `NextAvailableRead bug report - ${new Date().toLocaleString()}`,
+    subject: `NextAvailableRead bug report - ${new Date().toLocaleString(
+      "en-CA"
+    )}`,
     html: message,
   };
   sgMail
