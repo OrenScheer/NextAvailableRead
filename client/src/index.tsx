@@ -15,8 +15,10 @@ const theme: ChakraTheme = extendTheme({
   },
   colors: {
     nextAvailableReadBlue: {
+      50: "#EBF8FE",
       200: "#87CDE5",
       500: "#458EB2",
+      600: "#2B7B99",
     },
   },
 }) as ChakraTheme;
