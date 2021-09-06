@@ -152,6 +152,7 @@ const BugReportPopover = ({
                 onClick={() => {
                   onClose();
                   clearFields();
+                  setIsError(false);
                 }}
               >
                 Cancel
@@ -166,7 +167,7 @@ const BugReportPopover = ({
               </Button>
             </ButtonGroup>
             {isError && (
-              <Alert status="error" fontSize="14px">
+              <Alert status="error" fontSize="sm">
                 <AlertIcon />
                 There was an error. Please try again.
               </Alert>
