@@ -6,12 +6,13 @@ import {
   Divider,
   Flex,
   Heading,
+  IconButton,
   Link,
   Text,
   useColorModeValue,
 } from "@chakra-ui/react";
 
-import { FaBook } from "react-icons/fa";
+import { FaBook, FaGithub } from "react-icons/fa";
 import { Book, Shelf } from "./types";
 import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import BookList from "./components/BookList";
@@ -192,12 +193,25 @@ const App: React.FC = () => {
       >
         <Divider mb={2} />
         <Flex justifyContent="space-between" alignItems="center">
-          <Text fontSize="sm" fontWeight={600} color={footerText}>
-            Created by{" "}
-            <Link href="https://orenscheer.me" isExternal color="#38B2AC">
-              Oren Scheer
+          <Flex alignItems="center">
+            <Link
+              href="https://github.com/orenscheer/nextavailableread"
+              isExternal
+            >
+              <IconButton
+                aria-label="NextAvailableRead GitHub"
+                icon={<FaGithub style={{ color: footerText }} />}
+                variant="ghost"
+                size="sm"
+              />
             </Link>
-          </Text>
+            <Text fontSize="sm" fontWeight={600} color={footerText}>
+              Created by{" "}
+              <Link href="https://orenscheer.me" isExternal color="#38B2AC">
+                Oren Scheer
+              </Link>
+            </Text>
+          </Flex>
           <BugReportPopover
             footerTextColor={footerText}
             apiUrlPrefix={apiUrlPrefix}
