@@ -3,6 +3,6 @@ Find books from your Goodreads shelves that are currently available for checkout
 
 App built with TypeScript, React, and Node.js.
 
-Deployed using Heroku and Netlify to [nextavailableread.orenscheer.me](https://nextavailableread.orenscheer.me).
+Deployed using Heroku and Netlify to [nextavailableread.orenscheer.com](https://nextavailableread.orenscheer.com).
 
 <img src="images/Results.png">

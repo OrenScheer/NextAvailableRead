@@ -13,6 +13,7 @@ BluebirdPromise.config({
 const app: Application = express();
 dotenv.config();
 const port = process.env.PORT || 5309;
+const BASE_URL = "orenscheer.com";
 const sendgridApiKey = process.env.SENDGRID_API_KEY || "";
 sgMail.setApiKey(sendgridApiKey);
 
@@ -317,8 +318,8 @@ app.post("/bugreport", (req: Request, res: Response) => {
   }
   message += "</p>";
   const msg = {
-    to: "nextavailableread-bugs@orenscheer.me",
-    from: "nextavailableread@orenscheer.me",
+    to: `nextavailableread-bugs@${BASE_URL}`,
+    from: `nextavailableread@${BASE_URL}`,
     subject: `NextAvailableRead bug report - ${new Date().toLocaleString(
       "en-CA"
     )}`,

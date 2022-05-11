@@ -3,5 +3,6 @@ const API_URL_PREFIX =
     ? "https://nextavailableread-backend.herokuapp.com"
     : "";
 const COLOR_SCHEME = "nextAvailableReadBlue";
+const BASE_URL = "orenscheer.com";
 
-export { API_URL_PREFIX, COLOR_SCHEME };
+export { API_URL_PREFIX, COLOR_SCHEME, BASE_URL };

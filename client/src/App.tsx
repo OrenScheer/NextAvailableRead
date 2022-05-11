@@ -18,7 +18,7 @@ import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import BookList from "./components/BookList";
 import FormSteps from "./components/FormSteps";
 import BugReportPopover from "./components/BugReportPopover";
-import { API_URL_PREFIX, COLOR_SCHEME } from "./constants";
+import { API_URL_PREFIX, COLOR_SCHEME, BASE_URL } from "./constants";
 
 const dummyBook: Book = {
   title: "",
@@ -206,7 +206,7 @@ const App: React.FC = () => {
             </Link>
             <Text fontSize="sm" fontWeight={600} color={footerText}>
               Created by{" "}
-              <Link href="https://orenscheer.me" isExternal color={accentColor}>
+              <Link href={`https://${BASE_URL}`} isExternal color={accentColor}>
                 Oren Scheer
               </Link>
             </Text>
