@@ -5,12 +5,15 @@ import cors from "cors";
 import BluebirdPromise from "bluebird";
 import dotenv from "dotenv";
 import sgMail from "@sendgrid/mail";
+import statusMonitor from "express-status-monitor";
 
 BluebirdPromise.config({
   cancellation: true,
 });
 
 const app: Application = express();
+app.use(statusMonitor());
+
 dotenv.config();
 const port = process.env.PORT || 5309;
 const BASE_URL = "orenscheer.com";
