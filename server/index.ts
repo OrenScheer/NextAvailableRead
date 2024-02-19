@@ -214,50 +214,26 @@ app.get("/books", (req: Request, res: Response) => {
       ];
     }
 
-    const bookPromises: Promise<void>[] = [];
-    booksFromShelf.forEach((book, i, arr) => {
-      bookPromises.push(
-        Promise.resolve(
-          axios.get(
-            `https://${biblioCommonsPrefix}.bibliocommons.com/v2/search?query=(${encodeURI(
-              `title:(${book.title}) AND contributor:(${book.author})`
-            )})&searchType=bl&f_FORMAT=EBOOK`
-          )
-        )
-          .then((page) => {
-            const $ = cheerio.load(page.data);
-            const $available = $(".cp-search-result-item-content")
-              .first()
-              .find(".manifestation-item-format-call-wrap.available");
-            if ($available.length > 0) {
-              // eslint-disable-next-line no-param-reassign
-              arr[
-                i
-              ].libraryUrl = `https://${biblioCommonsPrefix}.bibliocommons.com${
-                $available.find("a").attr("href") as string
-              }`;
-              console.log(`FOUND ${book.title}`);
-              res.write(`data: ${JSON.stringify(book)}\n\n`);
-              return;
-            }
-            throw new Error("Book is not available.");
-          })
-          .catch((err) => {
-            throw err;
-          })
-      );
+    const bookFunctions: (() => Promise<void>)[] = [];
+    booksFromShelf.forEach((book, i) => {
+      bookFunctions.push(async () => {
+        const [available, bookUrl] = await isAvailable(
+          book,
+          biblioCommonsPrefix
+        );
+        if (available) {
+          booksFromShelf[i].libraryUrl = bookUrl;
+          console.log(`FOUND ${book.title}`);
+          res.write(`data: ${JSON.stringify(book)}\n\n`);
+        }
+      });
     });
 
-    await Promise.all(bookPromises)
-      .catch(async () => {
-        await Promise.allSettled(bookPromises);
-        console.log("Not enough found.");
-      })
-      .finally(() => {
-        res.write(`data: done here\n\n`);
-        res.status(200).send();
-        res.end();
-      });
+    await Promise.all(bookFunctions.map((bp) => bp())).then(() => {
+      res.write(`data: done here\n\n`);
+      res.status(200).send();
+      res.end();
+    });
   })().catch((err) => {
     console.log(err);
     res.write(`data: error\n\n`);
