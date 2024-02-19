@@ -2,14 +2,9 @@ import express, { Application, Request, Response } from "express";
 import axios from "axios";
 import cheerio, { Cheerio, Element } from "cheerio";
 import cors from "cors";
-import BluebirdPromise from "bluebird";
 import dotenv from "dotenv";
 import sgMail from "@sendgrid/mail";
 import statusMonitor from "express-status-monitor";
-
-BluebirdPromise.config({
-  cancellation: true,
-});
 
 const app: Application = express();
 app.use(statusMonitor());
@@ -88,7 +83,7 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
 const isAvailable = async (
   book: Book,
   biblioCommonsPrefix: string
-): BluebirdPromise<[boolean, string]> => {
+): Promise<[boolean, string]> => {
   const url = `https://${biblioCommonsPrefix}.bibliocommons.com/v2/search?query=(${encodeURI(
     `title:(${book.title}) AND contributor:(${book.author})`
   )})&searchType=bl&f_FORMAT=EBOOK`;
@@ -144,7 +139,7 @@ app.get("/books", (req: Request, res: Response) => {
     };
     res.writeHead(200, headers);
 
-    const promises: PromiseLike<Book[]>[] = [];
+    const promises: Promise<Book[]>[] = [];
     for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
       promises.push(
         axios
@@ -201,7 +196,7 @@ app.get("/books", (req: Request, res: Response) => {
           })
       );
     }
-    const result = await BluebirdPromise.all(promises).catch((err) => {
+    const result = await Promise.all(promises).catch((err) => {
       throw err;
     });
 
@@ -219,10 +214,10 @@ app.get("/books", (req: Request, res: Response) => {
       ];
     }
 
-    let bookPromises: BluebirdPromise<void>[] = [];
+    const bookPromises: Promise<void>[] = [];
     booksFromShelf.forEach((book, i, arr) => {
       bookPromises.push(
-        BluebirdPromise.resolve(
+        Promise.resolve(
           axios.get(
             `https://${biblioCommonsPrefix}.bibliocommons.com/v2/search?query=(${encodeURI(
               `title:(${book.title}) AND contributor:(${book.author})`
@@ -253,14 +248,12 @@ app.get("/books", (req: Request, res: Response) => {
       );
     });
 
-    await BluebirdPromise.some(bookPromises, numberOfBooksRequested)
+    await Promise.all(bookPromises)
       .catch(async () => {
         await Promise.allSettled(bookPromises);
         console.log("Not enough found.");
       })
       .finally(() => {
-        bookPromises.forEach((promise) => promise.cancel());
-        bookPromises = [];
         res.write(`data: done here\n\n`);
         res.status(200).send();
         res.end();
