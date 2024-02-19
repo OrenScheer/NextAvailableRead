@@ -214,7 +214,7 @@ app.get("/books", (req: Request, res: Response) => {
       ];
     }
 
-    const bookFunctions: (() => Promise<void>)[] = [];
+    const bookFunctions: (() => Promise<boolean>)[] = [];
     booksFromShelf.forEach((book, i) => {
       bookFunctions.push(async () => {
         const [available, bookUrl] = await isAvailable(
@@ -225,15 +225,26 @@ app.get("/books", (req: Request, res: Response) => {
           booksFromShelf[i].libraryUrl = bookUrl;
           console.log(`FOUND ${book.title}`);
           res.write(`data: ${JSON.stringify(book)}\n\n`);
+          return true;
         }
+        return false;
       });
     });
 
-    await Promise.all(bookFunctions.map((bp) => bp())).then(() => {
-      res.write(`data: done here\n\n`);
-      res.status(200).send();
-      res.end();
-    });
+    const batchSize = 10;
+    let currentIndex = 0;
+    let remainingBooksRequired = numberOfBooksRequested;
+    while (remainingBooksRequired > 0 && currentIndex < bookFunctions.length) {
+      const batch = bookFunctions.slice(currentIndex, currentIndex + batchSize);
+      // eslint-disable-next-line no-await-in-loop
+      const results = await Promise.all(batch.map((bp) => bp()));
+      remainingBooksRequired -= results.filter((b) => b).length;
+      currentIndex += batchSize;
+    }
+
+    res.write(`data: done here\n\n`);
+    res.status(200).send();
+    res.end();
   })().catch((err) => {
     console.log(err);
     res.write(`data: error\n\n`);
