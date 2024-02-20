@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Box,
@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 
 import { FaBook, FaGithub } from "react-icons/fa";
+import axios, { AxiosResponse } from "axios";
 import { Book, Shelf } from "./types";
 import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import BookList from "./components/BookList";
@@ -122,6 +123,13 @@ const App: React.FC = () => {
       }
     };
   };
+
+  useEffect(() => {
+    axios
+      .get(`${API_URL_PREFIX}/landing`)
+      .then(() => {})
+      .catch(() => {});
+  }, []);
 
   return (
     <Flex

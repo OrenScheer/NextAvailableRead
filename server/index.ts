@@ -40,6 +40,10 @@ function unleak(str: string): string {
   return (" " + str).substr(1);
 }
 
+app.get("/landing", (req: Request, res: Response) => {
+  res.status(200).send("Welcome to NextAvailableRead!");
+});
+
 app.get("/users/:userID/shelves", (req: Request, res: Response) => {
   (async () => {
     const { userID } = req.params;
@@ -242,7 +246,6 @@ app.get("/books", (req: Request, res: Response) => {
       const results = await Promise.all(
         batch.map((book) =>
           (async () => {
-            console.log("yo");
             const [available, bookUrl] = await isAvailable(
               book,
               biblioCommonsPrefix
