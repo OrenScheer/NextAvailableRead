@@ -35,6 +35,11 @@ interface Shelf {
 app.use(cors({ origin: true }));
 app.use(express.json());
 
+function unleak(str: string): string {
+  // eslint-disable-next-line prefer-template
+  return (" " + str).substr(1);
+}
+
 app.get("/users/:userID/shelves", (req: Request, res: Response) => {
   (async () => {
     const { userID } = req.params;
@@ -49,17 +54,19 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
     const shelves: Shelf[] = [];
 
     const parseShelf = (shelfLink: Cheerio<Element>) => {
-      const text = shelfLink.text();
-      const link = shelfLink.attr("href") as string;
+      const text = unleak(shelfLink.text());
+      const link = unleak(shelfLink.attr("href") as string);
       const newShelf: Shelf = {
-        name: text
-          .substring(0, text.indexOf("("))
-          .replace("\u200e", "")
-          .trim()
-          .toLowerCase(),
-        url: `https://goodreads.com${link}&print=true`,
+        name: unleak(
+          text
+            .substring(0, text.indexOf("("))
+            .replace("\u200e", "")
+            .trim()
+            .toLowerCase()
+        ),
+        url: unleak(`https://goodreads.com${link}&print=true`),
         numberOfBooks: parseInt(
-          text.substring(text.indexOf("(") + 1, text.indexOf(")")),
+          unleak(text.substring(text.indexOf("(") + 1, text.indexOf(")"))),
           10
         ),
       };
@@ -89,7 +96,7 @@ const isAvailable = async (
   )})&searchType=bl&f_FORMAT=EBOOK`;
   let page;
   try {
-    page = await axios.get(url);
+    page = await axios.get(url, { maxRedirects: 0 });
   } catch {
     return [false, ""];
   }
@@ -100,9 +107,11 @@ const isAvailable = async (
   if ($available.length > 0) {
     return [
       true,
-      `https://${biblioCommonsPrefix}.bibliocommons.com${
-        $available.find("a").attr("href") as string
-      }`,
+      unleak(
+        `https://${biblioCommonsPrefix}.bibliocommons.com${unleak(
+          $available.find("a").attr("href") as string
+        )}`
+      ),
     ];
   }
   return [false, ""];
@@ -117,7 +126,7 @@ interface BooksRequest {
 
 app.get("/books", (req: Request, res: Response) => {
   (async () => {
-    const url = req.query.url as string;
+    const url = (req.query.url as string).replace("https://", "https://www.");
     const numberOfBooksOnShelf = parseInt(
       req.query.numberOfBooksOnShelf as string,
       10
@@ -139,52 +148,60 @@ app.get("/books", (req: Request, res: Response) => {
     };
     res.writeHead(200, headers);
 
-    const promises: Promise<Book[]>[] = [];
+    let promises: Promise<Book[]>[] = [];
     for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
       promises.push(
         axios
-          .get(`${url}&page=${i}`)
+          .get(`${url}&page=${i}`, { maxRedirects: 0 })
           .then((page) => {
             const booksFromPage: Book[] = [];
             const $ = cheerio.load(page.data);
             $(".bookalike").each((_, e) => {
               const $titleElem = $(e).find(".title").find(".value a");
-              const series = $titleElem.find("span").text();
+              const series = unleak($titleElem.find("span").text());
 
               const book: Book = {
-                title: $titleElem.text().replace(series, "").trim(),
-                author: $(e)
-                  .find(".author")
-                  .find("a")
-                  .text()
-                  .toString()
-                  .split(",")
-                  .reverse()
-                  .join(" ")
-                  .trim(),
-                pageCount: parseInt(
+                title: unleak($titleElem.text().replace(series, "").trim()),
+                author: unleak(
                   $(e)
-                    .find(".num_pages")
-                    .find(".value")
+                    .find(".author")
+                    .find("a")
                     .text()
-                    .replace(",", ""),
+                    .toString()
+                    .split(",")
+                    .reverse()
+                    .join(" ")
+                    .trim()
+                ),
+                pageCount: parseInt(
+                  unleak(
+                    $(e)
+                      .find(".num_pages")
+                      .find(".value")
+                      .text()
+                      .replace(",", "")
+                  ),
                   10
                 ),
                 rating: parseFloat(
-                  $(e).find(".avg_rating").find("div").text().toString()
+                  unleak($(e).find(".avg_rating").find("div").text().toString())
                 ),
-                goodreadsUrl: `https://goodreads.com${
-                  $(e).find("a").attr("href") as string
-                }`,
-                imageUrl: $(e)
-                  .find("img")
-                  .attr("src")
-                  ?.toString()
-                  .replace("SX50", "")
-                  .replace("SY75", "")
-                  .replace("_", "")
-                  .replace("..", ".")
-                  .replace(".jpg", "._SX318_.jpg") as string,
+                goodreadsUrl: unleak(
+                  `https://goodreads.com${unleak(
+                    $(e).find("a").attr("href") as string
+                  )}`
+                ),
+                imageUrl: unleak(
+                  $(e)
+                    .find("img")
+                    .attr("src")
+                    ?.toString()
+                    .replace("SX50", "")
+                    .replace("SY75", "")
+                    .replace("_", "")
+                    .replace("..", ".")
+                    .replace(".jpg", "._SX318_.jpg") as string
+                ),
               };
               booksFromPage.push(book);
             });
@@ -196,12 +213,12 @@ app.get("/books", (req: Request, res: Response) => {
           })
       );
     }
-    const result = await Promise.all(promises).catch((err) => {
+    let result = await Promise.all(promises).catch((err) => {
       throw err;
     });
-
     const booksFromShelf = result.flat();
-
+    promises = [];
+    result = [];
     console.log("Goodreads books loaded.");
     res.write("data: Goodreads found.\n\n");
 
@@ -213,31 +230,34 @@ app.get("/books", (req: Request, res: Response) => {
         booksFromShelf[i],
       ];
     }
-
-    const bookFunctions: (() => Promise<boolean>)[] = [];
-    booksFromShelf.forEach((book, i) => {
-      bookFunctions.push(async () => {
-        const [available, bookUrl] = await isAvailable(
-          book,
-          biblioCommonsPrefix
-        );
-        if (available) {
-          booksFromShelf[i].libraryUrl = bookUrl;
-          console.log(`FOUND ${book.title}`);
-          res.write(`data: ${JSON.stringify(book)}\n\n`);
-          return true;
-        }
-        return false;
-      });
-    });
-
     const batchSize = 10;
     let currentIndex = 0;
     let remainingBooksRequired = numberOfBooksRequested;
-    while (remainingBooksRequired > 0 && currentIndex < bookFunctions.length) {
-      const batch = bookFunctions.slice(currentIndex, currentIndex + batchSize);
+    while (remainingBooksRequired > 0 && currentIndex < booksFromShelf.length) {
+      const batch = booksFromShelf.slice(
+        currentIndex,
+        currentIndex + batchSize
+      );
       // eslint-disable-next-line no-await-in-loop
-      const results = await Promise.all(batch.map((bp) => bp()));
+      const results = await Promise.all(
+        batch.map((book) =>
+          (async () => {
+            console.log("yo");
+            const [available, bookUrl] = await isAvailable(
+              book,
+              biblioCommonsPrefix
+            );
+            if (available) {
+              // eslint-disable-next-line no-param-reassign
+              book.libraryUrl = bookUrl;
+              console.log(`FOUND ${book.title}`);
+              res.write(`data: ${JSON.stringify(book)}\n\n`);
+              return true;
+            }
+            return false;
+          })()
+        )
+      );
       remainingBooksRequired -= results.filter((b) => b).length;
       currentIndex += batchSize;
     }
