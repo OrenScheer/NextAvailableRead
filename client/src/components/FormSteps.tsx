@@ -34,6 +34,7 @@ type FormStepsProps = {
   numberOfBooks: number;
   setNumberOfBooks: Dispatch<SetStateAction<number>>;
   findBooks: () => void;
+  isDoneFinding: boolean;
 };
 
 const FormSteps = ({
@@ -48,6 +49,7 @@ const FormSteps = ({
   numberOfBooks,
   setNumberOfBooks,
   findBooks,
+  isDoneFinding,
 }: FormStepsProps): ReactElement => {
   const { nextStep, prevStep, activeStep } = useSteps({
     initialStep: 0,
@@ -181,7 +183,9 @@ const FormSteps = ({
                       colorScheme={COLOR_SCHEME}
                       variant="solid"
                     >
-                      Next step
+                      {activeStep === steps.length - 1
+                        ? "Find books"
+                        : "Next step"}
                     </Button>
                   </Flex>
                 </Flex>
@@ -200,6 +204,14 @@ const FormSteps = ({
             variant="outline"
           >
             Previous step
+          </Button>
+          <Button
+            onClick={findBooks}
+            isDisabled={!isDoneFinding}
+            colorScheme={COLOR_SCHEME}
+            variant="solid"
+          >
+            Retry
           </Button>
         </Flex>
       )}

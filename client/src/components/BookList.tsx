@@ -133,6 +133,7 @@ type BookListProps = {
   isLoaded: boolean[];
   isDoneFinding: boolean;
   isError: boolean;
+  findBooks: () => void;
 };
 
 const BookList = ({
@@ -141,6 +142,7 @@ const BookList = ({
   isLoaded,
   isDoneFinding,
   isError,
+  findBooks,
 }: BookListProps): ReactElement => {
   const notEnoughBooksAvailable = isDoneFinding && isLoaded.includes(false);
   const otherError = isError && !isLoaded.includes(true);
@@ -209,11 +211,16 @@ const BookList = ({
             >
               <AlertIcon boxSize="40px" mr={0} />
               <AlertTitle mt={4} mb={1} fontSize="2xl">
-                There was an error.
+                There was an unexpected error.
               </AlertTitle>
-              <AlertDescription fontSize="xl">
-                Please try again.
-              </AlertDescription>
+              <Button
+                onClick={findBooks}
+                colorScheme="red"
+                variant="solid"
+                mt={4}
+              >
+                Retry
+              </Button>
             </Alert>
           </Box>
         ) : (

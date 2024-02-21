@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 
 import { FaBook, FaGithub } from "react-icons/fa";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import { Book, Shelf } from "./types";
 import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import BookList from "./components/BookList";
@@ -120,6 +120,9 @@ const App: React.FC = () => {
           })
         );
         numberOfBooksReceived += 1;
+        if (numberOfBooksReceived >= numberOfBooks) {
+          setIsDoneFinding(true);
+        }
       }
     };
   };
@@ -179,6 +182,7 @@ const App: React.FC = () => {
             numberOfBooks={numberOfBooks}
             setNumberOfBooks={setNumberOfBooks}
             findBooks={findBooks}
+            isDoneFinding={isDoneFinding}
           />
           <BookList
             books={books}
@@ -186,6 +190,7 @@ const App: React.FC = () => {
             isLoaded={areBooksLoaded}
             isDoneFinding={isDoneFinding}
             isError={isError}
+            findBooks={findBooks}
           />
         </Flex>
       </Flex>
