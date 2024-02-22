@@ -152,77 +152,82 @@ app.get("/books", (req: Request, res: Response) => {
     };
     res.writeHead(200, headers);
 
-    let promises: Promise<Book[]>[] = [];
-    for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
-      promises.push(
-        axios
-          .get(`${url}&page=${i}`, { maxRedirects: 0 })
-          .then((page) => {
-            const booksFromPage: Book[] = [];
-            const $ = cheerio.load(page.data);
-            $(".bookalike").each((_, e) => {
-              const $titleElem = $(e).find(".title").find(".value a");
-              const series = unleak($titleElem.find("span").text());
+    const getGoodreadsBooks = async (): Promise<Book[]> => {
+      const functions: (() => Promise<void>)[] = [];
+      const books: Book[] = [];
+      for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
+        functions.push(async () => {
+          let page;
+          try {
+            page = await axios.get(`${url}&page=${i}`, { maxRedirects: 0 });
+          } catch {
+            return;
+          }
 
-              const book: Book = {
-                title: unleak($titleElem.text().replace(series, "").trim()),
-                author: unleak(
-                  $(e)
-                    .find(".author")
-                    .find("a")
-                    .text()
-                    .toString()
-                    .split(",")
-                    .reverse()
-                    .join(" ")
-                    .trim()
+          const $ = cheerio.load(page.data);
+          $(".bookalike").each((_, e) => {
+            const $titleElem = $(e).find(".title").find(".value a");
+            const series = unleak($titleElem.find("span").text());
+
+            const book: Book = {
+              title: unleak($titleElem.text().replace(series, "").trim()),
+              author: unleak(
+                $(e)
+                  .find(".author")
+                  .find("a")
+                  .text()
+                  .toString()
+                  .split(",")
+                  .reverse()
+                  .join(" ")
+                  .trim()
+              ),
+              pageCount: parseInt(
+                unleak(
+                  $(e).find(".num_pages").find(".value").text().replace(",", "")
                 ),
-                pageCount: parseInt(
-                  unleak(
-                    $(e)
-                      .find(".num_pages")
-                      .find(".value")
-                      .text()
-                      .replace(",", "")
-                  ),
-                  10
-                ),
-                rating: parseFloat(
-                  unleak($(e).find(".avg_rating").find("div").text().toString())
-                ),
-                goodreadsUrl: unleak(
-                  `https://goodreads.com${unleak(
-                    $(e).find("a").attr("href") as string
-                  )}`
-                ),
-                imageUrl: unleak(
-                  $(e)
-                    .find("img")
-                    .attr("src")
-                    ?.toString()
-                    .replace("SX50", "")
-                    .replace("SY75", "")
-                    .replace("_", "")
-                    .replace("..", ".")
-                    .replace(".jpg", "._SX318_.jpg") as string
-                ),
-              };
-              booksFromPage.push(book);
-            });
-            return booksFromPage;
-          })
-          .catch((err) => {
-            console.log("Couldn't retrieve shelf from Goodreads url.");
-            throw err;
-          })
-      );
+                10
+              ),
+              rating: parseFloat(
+                unleak($(e).find(".avg_rating").find("div").text().toString())
+              ),
+              goodreadsUrl: unleak(
+                `https://goodreads.com${unleak(
+                  $(e).find("a").attr("href") as string
+                )}`
+              ),
+              imageUrl: unleak(
+                $(e)
+                  .find("img")
+                  .attr("src")
+                  ?.toString()
+                  .replace("SX50", "")
+                  .replace("SY75", "")
+                  .replace("_", "")
+                  .replace("..", ".")
+                  .replace(".jpg", "._SX318_.jpg") as string
+              ),
+            };
+            books.push(book);
+          });
+        });
+      }
+
+      let currentIndex = 0;
+      const batchSize = 5;
+      while (currentIndex < functions.length) {
+        const batch = functions.slice(currentIndex, currentIndex + batchSize);
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.all(batch.map((fn) => fn()));
+        currentIndex += batchSize;
+      }
+      return books;
+    };
+
+    const booksFromShelf = await getGoodreadsBooks();
+    if (booksFromShelf.length === 0) {
+      throw new Error("Goodreads books failed to load.");
     }
-    let result = await Promise.all(promises).catch((err) => {
-      throw err;
-    });
-    const booksFromShelf = result.flat();
-    promises = [];
-    result = [];
     console.log("Goodreads books loaded.");
     res.write("data: Goodreads found.\n\n");
 
