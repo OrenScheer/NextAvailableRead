@@ -16,9 +16,9 @@ import {
   NumberInputStepper,
 } from "@chakra-ui/react";
 import { Step, Steps, useSteps } from "chakra-ui-steps";
+import { Select } from "chakra-react-select";
 import { LibraryOption, Shelf } from "../types";
 import ShelfSelector from "./ShelfSelector";
-import CustomSelect from "./Select";
 import libraries from "../libraries";
 import { COLOR_SCHEME } from "../constants";
 
@@ -77,13 +77,14 @@ const FormSteps = ({
 
   const librarySelectStep = (
     <Box width="300px" textAlign="left">
-      <CustomSelect
+      <Select
         options={libraries}
-        width="300px"
         value={librarySelection}
-        onChange={(newValue: { label: string; value: string }) => {
-          setLibrarySelection(newValue);
-          setLibraryPrefix(newValue.value);
+        onChange={(newValue: LibraryOption | null) => {
+          if (newValue) {
+            setLibrarySelection(newValue);
+            setLibraryPrefix(newValue.value);
+          }
         }}
         placeholder="Select or type a library"
       />
