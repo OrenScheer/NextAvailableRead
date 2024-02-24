@@ -57,7 +57,7 @@ const FormSteps = ({
 
   const userIDStep = (
     <FormControl id="userID">
-      <FormLabel d="flex" alignItems="center">
+      <FormLabel display="flex" alignItems="center">
         Goodreads user ID
       </FormLabel>
       <NumberInput

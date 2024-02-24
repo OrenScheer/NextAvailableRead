@@ -72,7 +72,7 @@ const ShelfSelector = ({ userID, setShelf }: ShelfProps): ReactElement => {
                 colorScheme={COLOR_SCHEME}
                 isDisabled={numberOfBooks < 1}
               >
-                <Text d="flex" alignItems="center">
+                <Text display="flex" alignItems="center">
                   {`${name} - ${numberOfBooks} books`}
                 </Text>
               </Radio>

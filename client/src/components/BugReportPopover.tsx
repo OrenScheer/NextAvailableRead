@@ -144,7 +144,7 @@ const BugReportPopover = ({
                 onChange={(event) => setDescription(event.target.value)}
               />
             </FormControl>
-            <ButtonGroup d="flex" justifyContent="flex-end">
+            <ButtonGroup display="flex" justifyContent="flex-end">
               <Button
                 variant="outline"
                 colorScheme={COLOR_SCHEME}

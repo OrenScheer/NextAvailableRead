@@ -162,7 +162,7 @@ const App: React.FC = () => {
             height="100px"
             alignItems="flex-end"
           >
-            <Heading d="flex" alignItems="center" color={accentColor}>
+            <Heading display="flex" alignItems="center" color={accentColor}>
               <FaBook style={{ marginRight: "10px" }} />
               NextAvailableRead
             </Heading>
