@@ -60,7 +60,7 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
               height={!isLoaded ? "30px" : "100%"}
               width="100%"
             >
-              <Heading size="md" align="left">
+              <Heading size="md" textAlign="left">
                 {book.title}
               </Heading>
             </Skeleton>

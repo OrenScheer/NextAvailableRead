@@ -150,7 +150,7 @@ const App: React.FC = () => {
         alignItems="center"
         width="100%"
         pb="48px"
-        mr={9}
+        mr={{ base: 9, md: 0 }}
       >
         <Flex bg={bg} width="100%" zIndex="9" pos="sticky" top="0">
           <Flex
