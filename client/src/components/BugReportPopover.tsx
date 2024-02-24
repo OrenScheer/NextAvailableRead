@@ -89,9 +89,8 @@ const BugReportPopover = ({
                 clearFields();
                 onClose();
                 toast({
-                  title: "Bug report submitted.",
-                  description:
-                    "Thank you very much. It will be looked at shortly!",
+                  title: "Thank you for submitting a bug report.",
+                  description: "It will be looked at shortly.",
                   status: "success",
                   isClosable: true,
                   position: "bottom-right",

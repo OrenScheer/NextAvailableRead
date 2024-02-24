@@ -145,7 +145,13 @@ const App: React.FC = () => {
       position="relative"
       minHeight="100vh"
     >
-      <Flex direction="column" alignItems="center" width="100%" pb="48px">
+      <Flex
+        direction="column"
+        alignItems="center"
+        width="100%"
+        pb="48px"
+        mr={9}
+      >
         <Flex bg={bg} width="100%" zIndex="9" pos="sticky" top="0">
           <Flex
             width="100%"

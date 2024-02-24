@@ -192,7 +192,11 @@ const BookList = ({
 
   return (
     <>
-      <Flex direction="column" width={{ base: "100%", md: "70%" }}>
+      <Flex
+        direction="column"
+        width={{ base: "100%", md: "70%" }}
+        mt={{ base: 4, md: 0 }}
+      >
         {otherError ? (
           <Box
             shadow="sm"
