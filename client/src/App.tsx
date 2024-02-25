@@ -47,6 +47,8 @@ const createDummyLoadedArray = (numberOfBooks: number): boolean[] => {
   return loaded;
 };
 
+let mostRecentRequestTime: number;
+
 const App: React.FC = () => {
   const [userID, setUserID] = useState("");
   const [shelf, setShelf] = useState<Shelf>();
@@ -78,6 +80,8 @@ const App: React.FC = () => {
     setIsBookListVisible(true);
     setIsDoneFinding(false);
     setIsError(false);
+    mostRecentRequestTime = Date.now();
+    const thisRequestTime = mostRecentRequestTime;
     const events = new EventSource(
       `${API_URL_PREFIX}/books?url=${encodeURI(
         shelf?.url as string
@@ -88,6 +92,10 @@ const App: React.FC = () => {
     );
     let numberOfBooksReceived = 0;
     events.onmessage = (event: MessageEvent) => {
+      if (thisRequestTime !== mostRecentRequestTime) {
+        events.close();
+        return;
+      }
       let data: string;
       if (event instanceof MessageEvent) {
         data = event.data as string;

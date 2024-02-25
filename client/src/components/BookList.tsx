@@ -62,7 +62,7 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
               width="100%"
             >
               <Heading
-                size={book.title.split(" ").length < 12 ? "md" : "sm"}
+                size={book.title.length < 50 ? "md" : "sm"}
                 textAlign="left"
               >
                 {book.title}
