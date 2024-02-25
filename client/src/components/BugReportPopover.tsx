@@ -115,7 +115,7 @@ const BugReportPopover = ({
                 ref={firstFieldRef}
               >
                 {bugTypes.map((bug) => (
-                  <option value={bug} label={bug} />
+                  <option value={bug} label={bug} key={bug} />
                 ))}
               </Select>
             </FormControl>
