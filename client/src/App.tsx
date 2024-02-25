@@ -19,7 +19,12 @@ import ColorModeSwitcher from "./components/ColorModeSwitcher";
 import BookList from "./components/BookList";
 import FormSteps from "./components/FormSteps";
 import BugReportPopover from "./components/BugReportPopover";
-import { API_URL_PREFIX, COLOR_SCHEME, BASE_URL } from "./constants";
+import {
+  API_URL_PREFIX,
+  COLOR_SCHEME,
+  BASE_URL,
+  USER_ID_STORAGE_KEY,
+} from "./constants";
 
 const dummyBook: Book = {
   title: "",
@@ -50,7 +55,9 @@ const createDummyLoadedArray = (numberOfBooks: number): boolean[] => {
 let mostRecentRequestTime: number;
 
 const App: React.FC = () => {
-  const [userID, setUserID] = useState("");
+  const [userID, setUserID] = useState(
+    localStorage.getItem(USER_ID_STORAGE_KEY) ?? ""
+  );
   const [shelf, setShelf] = useState<Shelf>();
   const [librarySelection, setLibrarySelection] = useState<{
     label: string;

@@ -4,5 +4,6 @@ const API_URL_PREFIX =
     : "";
 const COLOR_SCHEME = "nextAvailableReadBlue";
 const BASE_URL = "orenscheer.com";
+const USER_ID_STORAGE_KEY = "userID";
 
-export { API_URL_PREFIX, COLOR_SCHEME, BASE_URL };
+export { API_URL_PREFIX, COLOR_SCHEME, BASE_URL, USER_ID_STORAGE_KEY };

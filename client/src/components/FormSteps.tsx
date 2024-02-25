@@ -20,7 +20,7 @@ import { Select } from "chakra-react-select";
 import { LibraryOption, Shelf } from "../types";
 import ShelfSelector from "./ShelfSelector";
 import libraries from "../libraries";
-import { COLOR_SCHEME } from "../constants";
+import { COLOR_SCHEME, USER_ID_STORAGE_KEY } from "../constants";
 
 type FormStepsProps = {
   userID: string;
@@ -61,7 +61,10 @@ const FormSteps = ({
         Goodreads user ID
       </FormLabel>
       <NumberInput
-        onChange={(valueAsString: string) => setUserID(valueAsString)}
+        onChange={(valueAsString: string) => {
+          localStorage.setItem(USER_ID_STORAGE_KEY, valueAsString);
+          setUserID(valueAsString);
+        }}
         value={userID}
       >
         <NumberInputField />
