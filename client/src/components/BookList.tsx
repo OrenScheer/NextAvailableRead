@@ -51,9 +51,10 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
         direction="column"
         alignItems="center"
         justifyContent="space-between"
-        width="75%"
+        width={{ base: "80%", md: "90%", "2xl": "80%" }}
+        height="100%"
       >
-        <Box width="75%">
+        <Box width={{ base: "80%", md: "90%", "2xl": "80%" }}>
           <Flex direction="column">
             <Skeleton
               isLoaded={isLoaded}
@@ -71,7 +72,10 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
             </Skeleton>
           </Flex>
         </Box>
-        <Flex direction="column" width="75%">
+        <Flex
+          direction="column"
+          width={{ base: "80%", md: "90%", "2xl": "80%" }}
+        >
           <Flex
             direction="row"
             alignItems="center"
@@ -96,7 +100,7 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
         </Flex>
         <Flex
           alignItems="flex-start"
-          width="75%"
+          width={{ base: "80%", md: "90%", "2xl": "80%" }}
           flexWrap={{ base: "wrap", "2xl": "nowrap" }}
           direction="row"
           mt={2}
@@ -104,19 +108,29 @@ const BookCard = ({ book, isLoaded }: BookCardProps) => (
           <Skeleton
             isLoaded={isLoaded}
             me={4}
-            width="130px"
+            width={{ base: "130px", lg: "115px", "2xl": "130px" }}
             height="40px"
-            mb={{ base: "2" }}
+            mb={{ base: "2", md: "0" }}
           >
             <Link href={book.goodreadsUrl} isExternal>
-              <Button leftIcon={<FaGoodreads />} width="130px">
+              <Button
+                leftIcon={<FaGoodreads />}
+                width={{ base: "130px", lg: "115px", "2xl": "130px" }}
+              >
                 Goodreads
               </Button>
             </Link>
           </Skeleton>
-          <Skeleton isLoaded={isLoaded} width="130px" height="40px">
+          <Skeleton
+            isLoaded={isLoaded}
+            width={{ base: "130px", lg: "115px", "2xl": "130px" }}
+            height="40px"
+          >
             <Link href={book.libraryUrl} isExternal>
-              <Button leftIcon={<VscLibrary />} width="130px">
+              <Button
+                leftIcon={<VscLibrary />}
+                width={{ base: "130px", lg: "115px", "2xl": "130px" }}
+              >
                 Library
               </Button>
             </Link>
