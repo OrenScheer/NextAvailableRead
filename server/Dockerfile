@@ -9,7 +9,7 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm install
-RUN npx playwright install chromium
+RUN npx playwright install chromium --with-deps
 
 # Copy the rest of the application source code to the container
 COPY . .
@@ -21,4 +21,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # Command to run the application
-CMD ["node", "--max-old-space-size=200", "-r", "ts-node/register", "index.ts"]
+CMD ["xvfb-run", "node", "--max-old-space-size=200", "-r", "ts-node/register", "index.ts"]
