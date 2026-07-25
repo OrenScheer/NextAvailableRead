@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a parent image
-FROM node:22-alpine
+FROM mcr.microsoft.com/playwright:v1.58.2-noble
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -9,7 +9,6 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm install
-RUN npx playwright install chromium --with-deps
 
 # Copy the rest of the application source code to the container
 COPY . .
