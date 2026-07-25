@@ -47,7 +47,7 @@ function unleak(str: string): string {
 }
 
 async function login(url: string): Promise<[playwright.Browser, playwright.BrowserContext, playwright.Page]> {
-  const browser = await playwright['chromium'].launch({ headless: true })
+  const browser = await playwright['chromium'].launch({ headless: false })
   const context = await browser.newContext()
   let page = await context.newPage()
   await page.goto(url)
