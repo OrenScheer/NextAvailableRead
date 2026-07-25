@@ -19,5 +19,10 @@ EXPOSE 3000
 # Define environment variable
 ENV NODE_ENV=production
 
+ENV TINI_VERSION=v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
+
 # Command to run the application
-CMD ["node", "--max-old-space-size=200", "-r", "ts-node/register", "index.ts"]
+CMD ["xvfb-run", "node", "--max-old-space-size=200", "-r", "ts-node/register", "index.ts"]
