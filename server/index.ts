@@ -5,14 +5,20 @@ import cors from "cors";
 import dotenv from "dotenv";
 import sgMail from "@sendgrid/mail";
 import statusMonitor from "express-status-monitor";
+import playwright from 'playwright';
 
 const app: Application = express();
 app.use(statusMonitor());
 
 dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 const port = process.env.PORT || 5309;
 const BASE_URL = "orenscheer.com";
 const sendgridApiKey = process.env.SENDGRID_API_KEY || "";
+const goodreadsEmail = process.env.GOODREADS_EMAIL || "";
+const goodreadsPassword = process.env.GOODREADS_PASSWORD || "";
 sgMail.setApiKey(sendgridApiKey);
 
 interface Book {
@@ -40,6 +46,25 @@ function unleak(str: string): string {
   return (" " + str).substr(1);
 }
 
+async function login(url: string): Promise<[playwright.Browser, playwright.BrowserContext, playwright.Page]> {
+  const browser = await playwright['chromium'].launch({ headless: false })
+  const context = await browser.newContext()
+  let page = await context.newPage()
+  await page.goto(url)
+  const button = page.locator(".authPortalSignInButton")
+  await button.click()
+  await page.getByLabel("Email").focus()
+  await page.getByLabel("Password").focus()
+  const username_box = page.getByLabel("Email")
+  const password_box = page.getByLabel("Password")
+  const submit = page.locator("#signInSubmit")
+  await username_box.fill(goodreadsEmail)
+  await password_box.fill(goodreadsPassword)
+  await submit.click()
+  await page.content()
+  return [browser, context, page]
+}
+
 app.get("/landing", (req: Request, res: Response) => {
   res.status(200).send("Welcome to NextAvailableRead!");
 });
@@ -49,14 +74,13 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
     const { userID } = req.params;
     const url = `https://www.goodreads.com/review/list/${userID}`;
 
-    const page = await axios.get(url).catch((err) => {
-      console.log("Failed to get list of shelves.");
-      throw err;
-    });
+    const [browser, _, page] = await login(url)
 
-    const $ = cheerio.load(page.data);
+    await page.waitForSelector('#shelvesSection');
+
+    const dom = await page.content()
+    const $ = cheerio.load(dom);
     const shelves: Shelf[] = [];
-
     const parseShelf = (shelfLink: Cheerio<Element>) => {
       const text = unleak(shelfLink.text());
       const link = unleak(shelfLink.attr("href") as string);
@@ -76,7 +100,6 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
       };
       return newShelf;
     };
-
     shelves.push(parseShelf($("#shelvesSection > a")));
     $(".userShelf > a").each((_, e) => {
       shelves.push(parseShelf($(e)));
@@ -84,6 +107,7 @@ app.get("/users/:userID/shelves", (req: Request, res: Response) => {
     if (shelves.length === 0) {
       throw new Error("You have no shelves!");
     }
+    browser.close()
     res.status(200).send(shelves);
   })().catch((err) => {
     console.log(err);
@@ -155,16 +179,21 @@ app.get("/books", (req: Request, res: Response) => {
     const getGoodreadsBooks = async (): Promise<Book[]> => {
       const functions: (() => Promise<void>)[] = [];
       const books: Book[] = [];
-      for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 20); i += 1) {
+
+      const [browser, context] = await login(url)
+
+      for (let i = 1; i <= Math.ceil(numberOfBooksOnShelf / 100); i += 1) {
         functions.push(async () => {
           let page;
           try {
-            page = await axios.get(`${url}&page=${i}`, { maxRedirects: 0 });
-          } catch {
+            page = await context.newPage()
+            await page.goto(`${url}&page=${i}&per_page=100`, { timeout: 60000 })
+          } catch (err) {
+            console.log(err)
             return;
           }
-
-          const $ = cheerio.load(page.data);
+          const dom = await page.content()
+          const $ = cheerio.load(dom);
           $(".bookalike").each((_, e) => {
             const $titleElem = $(e).find(".title").find(".value a");
             const series = unleak($titleElem.find("span").text());
@@ -221,6 +250,7 @@ app.get("/books", (req: Request, res: Response) => {
         await Promise.all(batch.map((fn) => fn()));
         currentIndex += batchSize;
       }
+      browser.close()
       return books;
     };
 
@@ -228,7 +258,7 @@ app.get("/books", (req: Request, res: Response) => {
     if (booksFromShelf.length === 0) {
       throw new Error("Goodreads books failed to load.");
     }
-    console.log("Goodreads books loaded.");
+    console.log(`${booksFromShelf.length} Goodreads books loaded`);
     res.write("data: Goodreads found.\n\n");
 
     // shuffle algorithm from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
