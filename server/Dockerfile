@@ -20,4 +20,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # Command to run the application
-CMD ["xvfb-run", "node", "--max-old-space-size=200", "-r", "ts-node/register", "index.ts"]
+CMD ["node", "--max-old-space-size=200", "-r", "ts-node/register", "index.ts"]
