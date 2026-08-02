@@ -48,6 +48,7 @@ const BugReportPopover = ({
 
   const { onOpen, onClose, isOpen } = useDisclosure();
   const firstFieldRef = useRef(null);
+  const toast = useToast();
 
   const clearFields = () => {
     setChosenBugType(bugTypes[0]);
@@ -55,7 +56,6 @@ const BugReportPopover = ({
     setBookAuthor("");
     setDescription("");
   };
-  const toast = useToast();
 
   return (
     <Popover
@@ -63,6 +63,8 @@ const BugReportPopover = ({
       isOpen={isOpen}
       onOpen={onOpen}
       onClose={onClose}
+      closeOnBlur={!isSubmitting}
+      closeOnEsc={!isSubmitting}
     >
       <PopoverTrigger>
         <Button size="sm" variant="ghost" color={footerTextColor}>
@@ -77,6 +79,7 @@ const BugReportPopover = ({
           onSubmit={(e) => {
             e.preventDefault();
             setIsSubmitting(true);
+            setIsError(false);
             axios
               .post(`${API_URL_PREFIX}/bugreport`, {
                 type: chosenBugType,
@@ -85,7 +88,6 @@ const BugReportPopover = ({
                 description,
               })
               .then(() => {
-                setIsError(false);
                 clearFields();
                 onClose();
                 toast({
