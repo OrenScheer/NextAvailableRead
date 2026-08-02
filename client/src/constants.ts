@@ -1,6 +1,6 @@
 const API_URL_PREFIX =
   process.env.NODE_ENV === "production"
-    ? "https://nextavailableread-backend.onrender.com"
+    ? "https://nextavailableread.onrender.com"
     : "";
 const COLOR_SCHEME = "nextAvailableReadBlue";
 const BASE_URL = "orenscheer.com";

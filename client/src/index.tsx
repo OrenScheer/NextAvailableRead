@@ -9,6 +9,20 @@ import ReactDOM from "react-dom";
 import { StepsStyleConfig as Steps } from "chakra-ui-steps";
 import App from "./App";
 
+type BrowserProcess = {
+  env: Record<string, string | undefined>;
+};
+
+declare global {
+  interface Window {
+    process?: BrowserProcess;
+  }
+}
+
+if (!window.process) {
+  window.process = { env: {} };
+}
+
 const theme: ChakraTheme = extendTheme({
   components: {
     Steps,
@@ -23,6 +37,12 @@ const theme: ChakraTheme = extendTheme({
   },
 }) as ChakraTheme;
 
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
+
 ReactDOM.render(
   <React.StrictMode>
     <ColorModeScript />
@@ -30,5 +50,5 @@ ReactDOM.render(
       <App />
     </ChakraProvider>
   </React.StrictMode>,
-  document.getElementById("root")
+  rootElement
 );
