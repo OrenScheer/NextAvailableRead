@@ -79,7 +79,7 @@ const FormSteps = ({
   );
 
   const librarySelectStep = (
-    <Box width="300px" textAlign="left">
+    <Box width="100%" maxW="420px" textAlign="left">
       <Select
         options={libraries}
         value={librarySelection}
@@ -90,6 +90,20 @@ const FormSteps = ({
           }
         }}
         placeholder="Select or type a library"
+        menuPortalTarget={document.body}
+        menuPosition="fixed"
+        menuShouldScrollIntoView
+        chakraStyles={{
+          menu: (provided) => ({
+            ...provided,
+            zIndex: 9999,
+            width: "min(420px, 80vw)",
+          }),
+          menuList: (provided) => ({
+            ...provided,
+            maxHeight: "260px",
+          }),
+        }}
       />
     </Box>
   );

@@ -187,7 +187,7 @@ app.get("/books", (req: Request, res: Response) => {
           let page;
           try {
             page = await context.newPage()
-            await page.goto(`${url}&page=${i}&per_page=100`, { timeout: 60000 })
+            await page.goto(`${url}&page=${i}&per_page=100`, { timeout: 100000 })
           } catch (err) {
             console.log(err)
             return;
