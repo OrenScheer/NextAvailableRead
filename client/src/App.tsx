@@ -153,18 +153,17 @@ const App: React.FC = () => {
     <Flex
       textAlign="center"
       fontSize="xl"
-      pb={8}
       direction="column"
       alignItems="center"
       bg={bg}
-      position="relative"
       minHeight="100vh"
+      justifyContent="space-between"
     >
       <Flex
         direction="column"
         alignItems="center"
         width="100%"
-        pb="48px"
+        flex={1}
         mr={{ base: 9, md: 0 }}
       >
         <Flex bg={bg} width="100%" zIndex="9" pos="sticky" top="0">
@@ -217,12 +216,10 @@ const App: React.FC = () => {
       </Flex>
       <Box
         as="footer"
-        position="absolute"
-        bottom="0"
-        height="48px"
         width="100%"
         px={8}
-        mb={2}
+        mt={6}
+        pb={2}
       >
         <Divider mb={2} />
         <Flex justifyContent="space-between" alignItems="center">
